@@ -241,10 +241,10 @@ const Home: React.FC<HomeProps> = ({ isWalletConnected }) => {
             ) : (
               <div className="text-center py-12">
                 <p className="text-gray-500 text-lg">
-                  {searchQuery ? 'Aucun token trouvé' : 'Aucun token créé pour le moment'}
+                  {searchQuery ? 'Aucun token trouvé' : 'Veulliez vous connecter'}
                 </p>
                 <p className="text-gray-400 mt-2">
-                  Soyez le premier à créer un token sur Avalanche !
+                  Creer votre token sur AVALANCHE en deux clics
                 </p>
               </div>
             )}

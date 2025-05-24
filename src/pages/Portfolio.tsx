@@ -4,13 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Token, TokenService } from '@/services/tokenService';
+import { Transaction, transactionService } from '@/services/transactionService';
 import { walletService } from '@/services/walletService';
 import AvalancheStatus from '@/components/AvalancheStatus';
-import TokenCard from '@/components/TokenCard';
-import TokenSkeleton from '@/components/TokenSkeleton';
+import TokenBalance from '@/components/TokenBalance';
+import TransactionList from '@/components/TransactionList';
 import NetworkStatus from '@/components/NetworkStatus';
 import StatsDisplay from '@/components/StatsDisplay';
-import { Wallet, TrendingUp, AlertCircle, Loader2, RefreshCw, Plus, Search, Filter, Grid3X3, List } from 'lucide-react';
+import { Wallet, TrendingUp, AlertCircle, Loader2, RefreshCw, Plus, Search, Filter, Grid3X3, List, History } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 
@@ -22,11 +23,12 @@ interface PortfolioProps {
 const Portfolio: React.FC<PortfolioProps> = ({ isWalletConnected, walletAddress }) => {
   const [myTokens, setMyTokens] = useState<Token[]>([]);
   const [allTokens, setAllTokens] = useState<Token[]>([]);
-  const [filteredTokens, setFilteredTokens] = useState<Token[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isLoadingTransactions, setIsLoadingTransactions] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('all');
+  const [activeTab, setActiveTab] = useState('portfolio');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -37,14 +39,12 @@ const Portfolio: React.FC<PortfolioProps> = ({ isWalletConnected, walletAddress 
     loadAllTokens();
     if (isWalletConnected) {
       loadMyTokens();
+      loadTransactions();
     } else {
       setMyTokens([]);
+      setTransactions([]);
     }
   }, [isWalletConnected]);
-
-  useEffect(() => {
-    filterTokens();
-  }, [allTokens, myTokens, searchQuery, activeTab]);
 
   const loadAllTokens = async () => {
     try {
@@ -83,6 +83,26 @@ const Portfolio: React.FC<PortfolioProps> = ({ isWalletConnected, walletAddress 
     }
   };
 
+  const loadTransactions = async () => {
+    if (!isWalletConnected) return;
+    
+    try {
+      setIsLoadingTransactions(true);
+      const txHistory = await transactionService.getTransactionHistory();
+      setTransactions(txHistory);
+      console.log(`${txHistory.length} transactions chargées`);
+    } catch (error) {
+      console.error('Erreur lors du chargement des transactions:', error);
+      toast({
+        title: "Erreur de chargement",
+        description: "Impossible de charger l'historique des transactions",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoadingTransactions(false);
+    }
+  };
+
   const refreshMyTokens = async () => {
     try {
       setIsRefreshing(true);
@@ -96,6 +116,10 @@ const Portfolio: React.FC<PortfolioProps> = ({ isWalletConnected, walletAddress 
       if (isWalletConnected) {
         const myTokensData = await tokenService.getMyTokens();
         setMyTokens(myTokensData);
+        
+        // Actualiser aussi les transactions
+        await loadTransactions();
+        
         toast({
           title: "Portfolio actualisé",
           description: `${myTokensData.length} de vos tokens et ${allTokensData.length} tokens au total`,
@@ -116,28 +140,6 @@ const Portfolio: React.FC<PortfolioProps> = ({ isWalletConnected, walletAddress 
     } finally {
       setIsRefreshing(false);
     }
-  };
-
-  const filterTokens = () => {
-    let tokensToFilter: Token[] = [];
-    
-    if (activeTab === 'my' && isWalletConnected) {
-      tokensToFilter = myTokens;
-    } else {
-      tokensToFilter = allTokens;
-    }
-
-    if (!searchQuery) {
-      setFilteredTokens(tokensToFilter);
-      return;
-    }
-
-    const filtered = tokensToFilter.filter(token =>
-      token.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      token.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      token.creator.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    setFilteredTokens(filtered);
   };
 
   const handleViewToken = (tokenAddress: string) => {
@@ -173,35 +175,6 @@ const Portfolio: React.FC<PortfolioProps> = ({ isWalletConnected, walletAddress 
   const currentAccount = walletService.getCurrentAccount();
   const formatAddress = (address: string) => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
-  };
-
-  const getDisplayTokens = () => {
-    if (activeTab === 'my' && isWalletConnected) {
-      return filteredTokens;
-    }
-    return filteredTokens;
-  };
-
-  const getEmptyStateContent = () => {
-    if (activeTab === 'my') {
-      if (!isWalletConnected) {
-        return {
-          title: "Wallet non connecté",
-          description: "Connectez votre wallet pour voir vos tokens",
-          showCreateButton: false
-        };
-      }
-      return {
-        title: "Aucun token trouvé",
-        description: "Vous n'avez pas encore créé de tokens",
-        showCreateButton: true
-      };
-    }
-    return {
-      title: "Aucun token disponible",
-      description: "Aucun token n'a encore été créé sur la plateforme",
-      showCreateButton: true
-    };
   };
 
   return (
@@ -280,7 +253,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ isWalletConnected, walletAddress 
 
         {/* Portfolio Summary - Only show when wallet connected */}
         {isWalletConnected && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <Card className="border-l-4 border-l-avalanche-red card-hover hover-scale glow-effect">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-gray-500 flex items-center">
@@ -311,23 +284,6 @@ const Portfolio: React.FC<PortfolioProps> = ({ isWalletConnected, walletAddress 
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
                   Tokens créés
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-l-4 border-l-green-500 card-hover hover-scale">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500 flex items-center">
-                  <Grid3X3 className="w-4 h-4 mr-2 text-green-500" />
-                  Total Plateforme
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-avalanche-dark">
-                  {allTokens.length}
-                </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Tokens disponibles
                 </p>
               </CardContent>
             </Card>
@@ -382,170 +338,77 @@ const Portfolio: React.FC<PortfolioProps> = ({ isWalletConnected, walletAddress 
         {/* Tabs for different views */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-6">
-            <TabsTrigger value="all" className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4" />
-              Tous les Tokens ({allTokens.length})
-            </TabsTrigger>
-            <TabsTrigger value="my" className="flex items-center gap-2" disabled={!isWalletConnected}>
+            <TabsTrigger value="portfolio" className="flex items-center gap-2" disabled={!isWalletConnected}>
               <Wallet className="w-4 h-4" />
-              Mes Tokens ({myTokens.length})
+              Mes Tokens
+            </TabsTrigger>
+            <TabsTrigger value="transactions" className="flex items-center gap-2" disabled={!isWalletConnected}>
+              <History className="w-4 h-4" />
+              Transactions
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="all" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <TrendingUp className="w-5 h-5 text-avalanche-red" />
-                    <span>Tous les Tokens ({filteredTokens.length})</span>
-                  </div>
-                  {searchQuery && (
-                    <span className="text-sm text-gray-500">
-                      Résultats pour "{searchQuery}"
-                    </span>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <TokenSkeleton count={6} />
-                ) : filteredTokens.length > 0 ? (
-                  <div className={`grid gap-6 ${
-                    viewMode === 'grid' 
-                      ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
-                      : 'grid-cols-1'
-                  }`}>
-                    {filteredTokens.map((token, index) => (
-                      <div
-                        key={token.address}
-                        className="animate-in slide-in-from-bottom-4 duration-300 card-hover hover-scale"
-                        style={{ animationDelay: `${index * 50}ms` }}
-                      >
-                        <TokenCard
-                          token={token}
-                          onBuy={handleViewToken}
-                          isWalletConnected={isWalletConnected}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <TrendingUp className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      {getEmptyStateContent().title}
-                    </h3>
-                    <p className="text-gray-600 mb-4">
-                      {getEmptyStateContent().description}
-                    </p>
-                    {getEmptyStateContent().showCreateButton && (
-                      <Button
-                        onClick={() => navigate('/create-token')}
-                        className="bg-avalanche-red hover:bg-red-600 text-white"
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Créer le premier token
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+          {/* Portfolio Tab - Vue principale avec tokens et transactions */}
+          <TabsContent value="portfolio" className="space-y-6">
+            {isWalletConnected ? (
+              <TokenBalance 
+                tokens={myTokens}
+                userAddress={currentAccount || undefined}
+                totalPortfolioValue={totalPortfolioValue}
+              />
+            ) : (
+              <Card>
+                <CardContent className="text-center py-12">
+                  <Wallet className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    Connectez votre wallet
+                  </h3>
+                  <p className="text-gray-500 mb-6">
+                    Connectez votre wallet pour voir vos tokens
+                  </p>
+                  <Button
+                    onClick={() => window.location.reload()}
+                    className="bg-avalanche-red hover:bg-red-600 text-white"
+                  >
+                    <Wallet className="w-4 h-4 mr-2" />
+                    Connecter Wallet
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
-          <TabsContent value="my" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Wallet className="w-5 h-5 text-avalanche-red" />
-                    <span>Mes Tokens ({isWalletConnected ? filteredTokens.length : 0})</span>
-                  </div>
-                  {searchQuery && (
-                    <span className="text-sm text-gray-500">
-                      Résultats pour "{searchQuery}"
-                    </span>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {!isWalletConnected ? (
-                  <div className="text-center py-12">
-                    <AlertCircle className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      Wallet non connecté
-                    </h3>
-                    <p className="text-gray-600 mb-4">
-                      Connectez votre wallet pour voir vos tokens personnels
-                    </p>
-                    <Button
-                      onClick={() => window.location.reload()}
-                      variant="outline"
-                      className="border-avalanche-red text-avalanche-red hover:bg-avalanche-red hover:text-white"
-                    >
-                      <Wallet className="w-4 h-4 mr-2" />
-                      Connecter Wallet
-                    </Button>
-                  </div>
-                ) : isLoading ? (
-                  <TokenSkeleton count={3} />
-                ) : filteredTokens.length > 0 ? (
-                  <div className={`grid gap-6 ${
-                    viewMode === 'grid' 
-                      ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
-                      : 'grid-cols-1'
-                  }`}>
-                    {filteredTokens.map((token, index) => (
-                      <div
-                        key={token.address}
-                        className="animate-in slide-in-from-bottom-4 duration-300 card-hover hover-scale"
-                        style={{ animationDelay: `${index * 50}ms` }}
-                      >
-                        <TokenCard
-                          token={token}
-                          onBuy={handleViewToken}
-                          isWalletConnected={isWalletConnected}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <TrendingUp className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      Aucun token trouvé
-                    </h3>
-                    <p className="text-gray-600 mb-4">
-                      Vous n'avez pas encore créé de tokens
-                    </p>
-                    <Button
-                      onClick={() => navigate('/create-token')}
-                      className="bg-avalanche-red hover:bg-red-600 text-white"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Créer votre premier token
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+          {/* Transactions Tab */}
+          <TabsContent value="transactions" className="space-y-6">
+            {isWalletConnected ? (
+              <TransactionList 
+                transactions={transactions}
+                isLoading={isLoadingTransactions}
+                userAddress={currentAccount || undefined}
+              />
+            ) : (
+              <Card>
+                <CardContent className="text-center py-12">
+                  <History className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    Connectez votre wallet
+                  </h3>
+                  <p className="text-gray-500 mb-6">
+                    Connectez votre wallet pour voir vos transactions
+                  </p>
+                  <Button
+                    onClick={() => window.location.reload()}
+                    className="bg-avalanche-red hover:bg-red-600 text-white"
+                  >
+                    <Wallet className="w-4 h-4 mr-2" />
+                    Connecter Wallet
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
+
         </Tabs>
-
-        {/* Transaction History */}
-        <Card className="mt-8">
-          <CardHeader>
-            <CardTitle>Historique des Transactions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center py-8">
-              <p className="text-gray-600">
-                L'historique des transactions sera disponible après l'intégration des smart contracts.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
