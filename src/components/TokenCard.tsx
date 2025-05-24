@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Token } from '@/services/tokenService';
-import { ShoppingCart, TrendingUp, Copy } from 'lucide-react';
+import { ShoppingCart, TrendingUp, Copy, Zap, Star, Fire } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface TokenCardProps {
@@ -20,7 +20,7 @@ const TokenCard: React.FC<TokenCardProps> = ({
   const { toast } = useToast();
 
   const formatPrice = (price?: number) => {
-    if (!price) return "Prix non disponible";
+    if (!price) return "Price TBA";
     return `${price.toFixed(6)} AVAX`;
   };
 
@@ -52,116 +52,143 @@ const TokenCard: React.FC<TokenCardProps> = ({
     try {
       await navigator.clipboard.writeText(token.address);
       toast({
-        title: "Adresse copiée",
-        description: "L'adresse du contrat a été copiée dans le presse-papier"
+        title: "Address Copied",
+        description: "Contract address copied to clipboard"
       });
     } catch (error) {
       toast({
-        title: "Erreur",
-        description: "Impossible de copier l'adresse",
+        title: "Error",
+        description: "Unable to copy address",
         variant: "destructive"
       });
     }
   };
 
+  const getPumpLevel = () => {
+    const pump = Math.floor(Math.random() * 5) + 1;
+    return '🚀'.repeat(pump);
+  };
+
   return (
-    <Card className="hover:shadow-lg transition-shadow duration-200 border border-gray-200">
-      <CardHeader className="pb-3">
-        <div className="flex items-center space-x-3">
-          <img 
-            src={token.imageUrl || `https://via.placeholder.com/48/E84142/FFFFFF?text=${token.symbol.charAt(0)}`} 
-            alt={token.name}
-            className="w-12 h-12 rounded-full object-cover"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.src = `https://via.placeholder.com/48/E84142/FFFFFF?text=${token.symbol.charAt(0)}`;
-            }}
-          />
+    <Card className="pump-card group bg-gradient-to-br from-gray-900/90 to-gray-800/90 backdrop-blur-xl border-gray-700/50 hover:border-avalanche-red/50 transition-all duration-500 transform hover:scale-105 hover:rotate-1 overflow-hidden relative">
+      {/* Animated background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-avalanche-red/10 via-transparent to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+      
+      {/* Floating pump indicator */}
+      <div className="absolute top-4 right-4 text-2xl animate-bounce">
+        {getPumpLevel()}
+      </div>
+
+      <CardHeader className="relative z-10 pb-3">
+        <div className="flex items-center space-x-4">
+          <div className="relative">
+            <img 
+              src={token.imageUrl || `https://via.placeholder.com/56/E84142/FFFFFF?text=${token.symbol.charAt(0)}`} 
+              alt={token.name}
+              className="w-14 h-14 rounded-2xl object-cover ring-2 ring-gray-600 group-hover:ring-avalanche-red transition-all duration-300"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = `https://via.placeholder.com/56/E84142/FFFFFF?text=${token.symbol.charAt(0)}`;
+              }}
+            />
+            <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-400 rounded-full border-2 border-gray-800 animate-pulse"></div>
+          </div>
           <div className="flex-1">
-            <h3 className="font-semibold text-lg text-avalanche-dark">
+            <h3 className="font-black text-xl text-white glow-text group-hover:text-avalanche-red transition-colors duration-300">
               {token.name}
             </h3>
-            <p className="text-sm text-gray-600 font-mono">
+            <p className="text-lg font-bold text-gray-300 font-mono">
               ${token.symbol}
             </p>
           </div>
           <button
             onClick={copyAddress}
-            className="p-1 hover:bg-gray-100 rounded transition-colors"
-            title="Copier l'adresse du contrat"
+            className="p-2 hover:bg-gray-700 rounded-xl transition-colors group"
+            title="Copy contract address"
           >
-            <Copy className="w-4 h-4 text-gray-400" />
+            <Copy className="w-4 h-4 text-gray-400 group-hover:text-avalanche-red transition-colors" />
           </button>
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-3">
+      <CardContent className="relative z-10 space-y-4">
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-xs text-gray-500 uppercase tracking-wide">
-              Prix estimé
+          <div className="bg-gray-800/50 rounded-2xl p-4 backdrop-blur-sm">
+            <p className="text-xs text-gray-400 uppercase tracking-wider font-bold mb-1">
+              🔥 PRICE
             </p>
-            <p className="font-semibold text-avalanche-dark">
+            <p className="font-black text-lg text-white">
               {formatPrice(token.currentPrice)}
             </p>
           </div>
-          <div>
-            <p className="text-xs text-gray-500 uppercase tracking-wide">
-              Market Cap
+          <div className="bg-gray-800/50 rounded-2xl p-4 backdrop-blur-sm">
+            <p className="text-xs text-gray-400 uppercase tracking-wider font-bold mb-1 flex items-center">
+              <TrendingUp className="w-3 h-3 mr-1 text-green-400" />
+              MCAP
             </p>
-            <p className="font-semibold text-avalanche-dark flex items-center">
-              <TrendingUp className="w-3 h-3 mr-1 text-green-500" />
+            <p className="font-black text-lg text-green-400">
               {formatMarketCap(token.marketCap)}
             </p>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-xs text-gray-500 uppercase tracking-wide">
-              Offre totale
+          <div className="bg-gray-800/50 rounded-2xl p-4 backdrop-blur-sm">
+            <p className="text-xs text-gray-400 uppercase tracking-wider font-bold mb-1">
+              💎 SUPPLY
             </p>
-            <p className="font-semibold text-avalanche-dark">
+            <p className="font-black text-lg text-white">
               {formatSupply(token.totalSupply, token.decimals)}
             </p>
           </div>
-          <div>
-            <p className="text-xs text-gray-500 uppercase tracking-wide">
-              Votre balance
+          <div className="bg-gray-800/50 rounded-2xl p-4 backdrop-blur-sm">
+            <p className="text-xs text-gray-400 uppercase tracking-wider font-bold mb-1">
+              🏦 YOUR BAG
             </p>
-            <p className="font-semibold text-avalanche-dark">
+            <p className="font-black text-lg text-cyan-400">
               {token.userBalance ? `${parseFloat(token.userBalance).toFixed(2)}` : '0'}
             </p>
           </div>
         </div>
 
-        <div>
-          <p className="text-xs text-gray-500 uppercase tracking-wide">
-            Créateur
+        <div className="bg-gray-800/50 rounded-2xl p-4 backdrop-blur-sm">
+          <p className="text-xs text-gray-400 uppercase tracking-wider font-bold mb-2">
+            👤 CREATOR
           </p>
-          <p className="text-sm font-mono text-avalanche-dark">
+          <p className="text-sm font-mono text-cyan-300 flex items-center">
+            <Star className="w-3 h-3 mr-1" />
             {formatAddress(token.creator)}
           </p>
         </div>
 
-        <div>
-          <p className="text-xs text-gray-500 uppercase tracking-wide">
-            Adresse du contrat
+        <div className="bg-gradient-to-r from-gray-800/50 to-gray-700/50 rounded-2xl p-4 backdrop-blur-sm border border-gray-600/50">
+          <p className="text-xs text-gray-400 uppercase tracking-wider font-bold mb-2">
+            📝 CONTRACT
           </p>
-          <p className="text-sm font-mono text-avalanche-dark">
+          <p className="text-sm font-mono text-white flex items-center">
+            <Zap className="w-3 h-3 mr-1 text-avalanche-red" />
             {formatAddress(token.address)}
           </p>
         </div>
       </CardContent>
 
-      <CardFooter>
+      <CardFooter className="relative z-10">
         <Button 
           onClick={() => onBuy(token.address)}
           disabled={!isWalletConnected}
-          className="w-full bg-avalanche-red hover:bg-red-600 text-white"
+          className="w-full neon-button font-black text-lg py-6 rounded-2xl text-white transform transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:transform-none"
         >
-          <ShoppingCart className="w-4 h-4 mr-2" />
-          {isWalletConnected ? 'Acheter' : 'Connecter wallet'}
+          {isWalletConnected ? (
+            <>
+              <Fire className="w-5 h-5 mr-2 animate-pulse" />
+              PUMP IT! 🚀
+            </>
+          ) : (
+            <>
+              <ShoppingCart className="w-5 h-5 mr-2" />
+              CONNECT WALLET
+            </>
+          )}
         </Button>
       </CardFooter>
     </Card>
