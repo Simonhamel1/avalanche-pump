@@ -1,10 +1,12 @@
-
 import React, { useState, useEffect } from 'react';
 import TokenCard from '@/components/TokenCard';
 import BuyTokenModal from '@/components/BuyTokenModal';
+import AvalancheStatus from '@/components/AvalancheStatus';
 import { Token, TokenService } from '@/services/tokenService';
-import { Search, TrendingUp } from 'lucide-react';
+import { walletService } from '@/services/walletService';
+import { Search, TrendingUp, Loader2, RefreshCw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 
 interface HomeProps {
@@ -17,6 +19,8 @@ const Home: React.FC<HomeProps> = ({ isWalletConnected }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedToken, setSelectedToken] = useState<Token | null>(null);
   const [isBuyModalOpen, setIsBuyModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const { toast } = useToast();
 
   const tokenService = TokenService.getInstance();
@@ -29,9 +33,46 @@ const Home: React.FC<HomeProps> = ({ isWalletConnected }) => {
     filterTokens();
   }, [tokens, searchQuery]);
 
-  const loadTokens = () => {
-    const allTokens = tokenService.getAllTokens();
-    setTokens(allTokens);
+  const loadTokens = async () => {
+    try {
+      setIsLoading(true);
+      const allTokens = await tokenService.getAllTokens();
+      setTokens(allTokens);
+      console.log(`${allTokens.length} tokens chargés depuis la blockchain`);
+    } catch (error) {
+      console.error('Erreur lors du chargement des tokens:', error);
+      toast({
+        title: "Erreur de chargement",
+        description: "Impossible de charger les tokens depuis la blockchain. Vérifiez votre connexion.",
+        variant: "destructive"
+      });
+      // En cas d'erreur, afficher un tableau vide plutôt que de laisser l'ancien état
+      setTokens([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const refreshTokens = async () => {
+    try {
+      setIsRefreshing(true);
+      await tokenService.refreshTokens();
+      const allTokens = await tokenService.getAllTokens();
+      setTokens(allTokens);
+      toast({
+        title: "Tokens actualisés",
+        description: `${allTokens.length} tokens chargés depuis la blockchain`,
+      });
+    } catch (error) {
+      console.error('Erreur lors de l\'actualisation:', error);
+      toast({
+        title: "Erreur d'actualisation",
+        description: "Impossible d'actualiser les tokens",
+        variant: "destructive"
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   const filterTokens = () => {
@@ -42,13 +83,14 @@ const Home: React.FC<HomeProps> = ({ isWalletConnected }) => {
 
     const filtered = tokens.filter(token =>
       token.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      token.symbol.toLowerCase().includes(searchQuery.toLowerCase())
+      token.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      token.creator.toLowerCase().includes(searchQuery.toLowerCase())
     );
     setFilteredTokens(filtered);
   };
 
-  const handleBuyToken = (tokenId: string) => {
-    const token = tokens.find(t => t.id === tokenId);
+  const handleBuyToken = (tokenAddress: string) => {
+    const token = tokens.find(t => t.address === tokenAddress);
     if (token) {
       setSelectedToken(token);
       setIsBuyModalOpen(true);
@@ -59,10 +101,12 @@ const Home: React.FC<HomeProps> = ({ isWalletConnected }) => {
     if (!selectedToken) return;
 
     try {
-      await tokenService.buyToken(selectedToken.id, amount);
+      // Pour l'instant, on simule l'achat car il n'y a pas de bonding curve
+      // Dans une implémentation future, on pourrait ajouter un contrat de trading
       toast({
-        title: "Achat réussi !",
-        description: `Vous avez acheté ${amount} AVAX de ${selectedToken.symbol}`,
+        title: "Fonctionnalité à venir",
+        description: `L'achat de tokens sera disponible prochainement`,
+        variant: "default",
       });
     } catch (error) {
       toast({
@@ -71,6 +115,22 @@ const Home: React.FC<HomeProps> = ({ isWalletConnected }) => {
         variant: "destructive",
       });
       throw error;
+    }
+  };
+
+  const handleSwitchToAvalanche = async () => {
+    try {
+      await walletService.switchToAvalanche();
+      toast({
+        title: "Réseau changé",
+        description: "Vous êtes maintenant connecté au réseau Avalanche",
+      });
+    } catch (error) {
+      toast({
+        title: "Erreur de réseau",
+        description: error instanceof Error ? error.message : "Impossible de changer de réseau",
+        variant: "destructive",
+      });
     }
   };
 
@@ -86,6 +146,16 @@ const Home: React.FC<HomeProps> = ({ isWalletConnected }) => {
             Investissez dans les nouveaux tokens via notre système de bonding curve. 
             Créez, achetez et tradez en toute sécurité sur Avalanche.
           </p>
+        </div>
+
+        {/* Avalanche Status */}
+        <div className="mb-8">
+          <AvalancheStatus 
+            isConnected={isWalletConnected}
+            isAvalancheNetwork={walletService.isAvalancheNetwork()}
+            networkName={walletService.getNetworkName()}
+            onSwitchNetwork={handleSwitchToAvalanche}
+          />
         </div>
 
         {/* Stats Row */}
@@ -125,9 +195,9 @@ const Home: React.FC<HomeProps> = ({ isWalletConnected }) => {
           </div>
         </div>
 
-        {/* Search Bar */}
-        <div className="mb-8">
-          <div className="relative max-w-md mx-auto">
+        {/* Search and Refresh Bar */}
+        <div className="mb-8 flex flex-col sm:flex-row gap-4 items-center justify-between">
+          <div className="relative max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <Input
               type="text"
@@ -137,26 +207,48 @@ const Home: React.FC<HomeProps> = ({ isWalletConnected }) => {
               className="pl-10"
             />
           </div>
+          <Button
+            onClick={refreshTokens}
+            disabled={isRefreshing}
+            variant="outline"
+            className="flex items-center space-x-2"
+          >
+            <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span>Actualiser</span>
+          </Button>
         </div>
 
-        {/* Tokens Grid */}
-        {filteredTokens.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredTokens.map((token) => (
-              <TokenCard
-                key={token.id}
-                token={token}
-                onBuy={handleBuyToken}
-                isWalletConnected={isWalletConnected}
-              />
-            ))}
+        {/* Loading State */}
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-avalanche-red" />
+            <span className="ml-2 text-gray-600">Chargement des tokens...</span>
           </div>
         ) : (
-          <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">
-              {searchQuery ? 'Aucun token trouvé' : 'Aucun token disponible'}
-            </p>
-          </div>
+          <>
+            {/* Tokens Grid */}
+            {filteredTokens.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {filteredTokens.map((token) => (
+                  <TokenCard
+                    key={token.address}
+                    token={token}
+                    onBuy={handleBuyToken}
+                    isWalletConnected={isWalletConnected}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-gray-500 text-lg">
+                  {searchQuery ? 'Aucun token trouvé' : 'Aucun token créé pour le moment'}
+                </p>
+                <p className="text-gray-400 mt-2">
+                  Soyez le premier à créer un token sur Avalanche !
+                </p>
+              </div>
+            )}
+          </>
         )}
 
         {/* Buy Modal */}

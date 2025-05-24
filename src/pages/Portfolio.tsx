@@ -1,53 +1,107 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Wallet, TrendingUp, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Token, TokenService } from '@/services/tokenService';
+import { walletService } from '@/services/walletService';
+import AvalancheStatus from '@/components/AvalancheStatus';
+import TokenCard from '@/components/TokenCard';
+import { Wallet, TrendingUp, AlertCircle, Loader2, RefreshCw, Plus } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 interface PortfolioProps {
   isWalletConnected: boolean;
-  walletAddress?: string;
+  walletAddress?: string; // Assurez-vous que cette ligne est présente et correcte
 }
 
 const Portfolio: React.FC<PortfolioProps> = ({ isWalletConnected, walletAddress }) => {
-  // Mock data pour la démonstration
-  const mockHoldings = [
-    {
-      id: '1',
-      name: 'AvalancheToken',
-      symbol: 'AVAX',
-      amount: 1000,
-      currentPrice: 0.0001,
-      purchasePrice: 0.00008,
-      imageUrl: 'https://cryptologos.cc/logos/avalanche-avax-logo.png'
-    },
-    {
-      id: '2',
-      name: 'SnowToken',
-      symbol: 'SNOW',
-      amount: 5000,
-      currentPrice: 0.00005,
-      purchasePrice: 0.00003,
-      imageUrl: 'https://via.placeholder.com/64/E84142/FFFFFF?text=SNOW'
-    }
-  ];
+  const [myTokens, setMyTokens] = useState<Token[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const { toast } = useToast();
+  const navigate = useNavigate();
 
-  const calculatePnL = (amount: number, currentPrice: number, purchasePrice: number) => {
-    const currentValue = amount * currentPrice;
-    const purchaseValue = amount * purchasePrice;
-    const pnl = currentValue - purchaseValue;
-    const pnlPercentage = ((currentPrice - purchasePrice) / purchasePrice) * 100;
-    return { pnl, pnlPercentage, currentValue };
+  const tokenService = TokenService.getInstance();
+
+  useEffect(() => {
+    if (isWalletConnected) {
+      loadMyTokens();
+    } else {
+      setMyTokens([]);
+      setIsLoading(false);
+    }
+  }, [isWalletConnected]);
+
+  const loadMyTokens = async () => {
+    try {
+      setIsLoading(true);
+      const tokens = await tokenService.getMyTokens();
+      setMyTokens(tokens);
+      console.log(`${tokens.length} tokens de l'utilisateur chargés`);
+    } catch (error) {
+      console.error('Erreur lors du chargement des tokens:', error);
+      toast({
+        title: "Erreur de chargement",
+        description: "Impossible de charger vos tokens depuis la blockchain",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const totalPortfolioValue = mockHoldings.reduce((total, holding) => {
-    return total + (holding.amount * holding.currentPrice);
+  const refreshMyTokens = async () => {
+    try {
+      setIsRefreshing(true);
+      const tokens = await tokenService.getMyTokens();
+      setMyTokens(tokens);
+      toast({
+        title: "Portfolio actualisé",
+        description: `${tokens.length} tokens trouvés dans votre portefeuille`,
+      });
+    } catch (error) {
+      console.error('Erreur lors de l\'actualisation:', error);
+      toast({
+        title: "Erreur d'actualisation",
+        description: "Impossible d'actualiser votre portfolio",
+        variant: "destructive"
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const handleViewToken = (tokenAddress: string) => {
+    // Pour l'instant, on peut juste copier l'adresse ou afficher plus de détails
+    toast({
+      title: "Token sélectionné",
+      description: `Adresse: ${tokenAddress}`,
+    });
+  };
+
+  const handleSwitchToAvalanche = async () => {
+    try {
+      await walletService.switchToAvalanche();
+      toast({
+        title: "Réseau changé",
+        description: "Vous êtes maintenant connecté au réseau Avalanche",
+      });
+    } catch (error) {
+      toast({
+        title: "Erreur de réseau",
+        description: error instanceof Error ? error.message : "Impossible de changer de réseau",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const totalPortfolioValue = myTokens.reduce((total, token) => {
+    const balance = parseFloat(token.userBalance || '0');
+    const price = token.currentPrice || 0;
+    return total + (balance * price);
   }, 0);
 
-  const totalPnL = mockHoldings.reduce((total, holding) => {
-    const { pnl } = calculatePnL(holding.amount, holding.currentPrice, holding.purchasePrice);
-    return total + pnl;
-  }, 0);
-
+  const currentAccount = walletService.getCurrentAccount();
   const formatAddress = (address: string) => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
@@ -89,8 +143,18 @@ const Portfolio: React.FC<PortfolioProps> = ({ isWalletConnected, walletAddress 
           </h1>
           <div className="flex items-center space-x-2 text-gray-600">
             <Wallet className="w-4 h-4" />
-            <span>{formatAddress(walletAddress!)}</span>
+            <span>{currentAccount ? formatAddress(currentAccount) : 'Non connecté'}</span>
           </div>
+        </div>
+
+        {/* Avalanche Status */}
+        <div className="mb-8">
+          <AvalancheStatus 
+            isConnected={isWalletConnected}
+            isAvalancheNetwork={walletService.isAvalancheNetwork()}
+            networkName={walletService.getNetworkName()}
+            onSwitchNetwork={handleSwitchToAvalanche}
+          />
         </div>
 
         {/* Portfolio Summary */}
@@ -114,28 +178,12 @@ const Portfolio: React.FC<PortfolioProps> = ({ isWalletConnected, walletAddress 
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-gray-500">
-                P&L Total
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold ${totalPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {totalPnL >= 0 ? '+' : ''}{totalPnL.toFixed(4)} AVAX
-              </div>
-              <p className="text-xs text-gray-500 mt-1">
-                {totalPnL >= 0 ? '+' : ''}{((totalPnL / (totalPortfolioValue - totalPnL)) * 100).toFixed(2)}%
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">
-                Tokens Détenus
+                Tokens Créés
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-avalanche-dark">
-                {mockHoldings.length}
+                {myTokens.length}
               </div>
               <p className="text-xs text-gray-500 mt-1">
                 Types différents
@@ -144,70 +192,70 @@ const Portfolio: React.FC<PortfolioProps> = ({ isWalletConnected, walletAddress 
           </Card>
         </div>
 
+        {/* Action Bar */}
+        <div className="flex flex-col sm:flex-row gap-4 items-center justify-between mb-8">
+          <div className="flex gap-4">
+            <Button
+              onClick={() => navigate('/create-token')}
+              className="bg-avalanche-red hover:bg-red-600 text-white"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Créer un Token
+            </Button>
+          </div>
+          
+          <Button
+            onClick={refreshMyTokens}
+            disabled={isRefreshing}
+            variant="outline"
+            className="flex items-center space-x-2"
+          >
+            <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span>Actualiser</span>
+          </Button>
+        </div>
+
         {/* Holdings */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <TrendingUp className="w-5 h-5 text-avalanche-red" />
-              <span>Mes Positions</span>
+              <span>Mes Positions ({myTokens.length})</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {mockHoldings.length > 0 ? (
-              <div className="space-y-4">
-                {mockHoldings.map((holding) => {
-                  const { pnl, pnlPercentage, currentValue } = calculatePnL(
-                    holding.amount,
-                    holding.currentPrice,
-                    holding.purchasePrice
-                  );
-
-                  return (
-                    <div key={holding.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                      <div className="flex items-center space-x-4">
-                        <img 
-                          src={holding.imageUrl} 
-                          alt={holding.name}
-                          className="w-12 h-12 rounded-full"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = `https://via.placeholder.com/48/E84142/FFFFFF?text=${holding.symbol.charAt(0)}`;
-                          }}
-                        />
-                        <div>
-                          <h3 className="font-semibold text-avalanche-dark">
-                            {holding.name}
-                          </h3>
-                          <p className="text-sm text-gray-600">
-                            {holding.amount.toLocaleString()} {holding.symbol}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="text-right space-y-1">
-                        <div className="font-semibold text-avalanche-dark">
-                          {currentValue.toFixed(4)} AVAX
-                        </div>
-                        <div className={`text-sm ${pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {pnl >= 0 ? '+' : ''}{pnl.toFixed(4)} AVAX ({pnl >= 0 ? '+' : ''}{pnlPercentage.toFixed(2)}%)
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          Prix: {holding.currentPrice.toFixed(6)} AVAX
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-avalanche-red" />
+                <span className="ml-2 text-gray-600">Chargement de votre portfolio...</span>
+              </div>
+            ) : myTokens.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {myTokens.map((token) => (
+                  <TokenCard
+                    key={token.address}
+                    token={token}
+                    onBuy={handleViewToken}
+                    isWalletConnected={isWalletConnected}
+                  />
+                ))}
               </div>
             ) : (
               <div className="text-center py-8">
                 <TrendingUp className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  Aucune position
+                  Aucun token trouvé
                 </h3>
-                <p className="text-gray-600">
-                  Vous n'avez pas encore de tokens dans votre portefeuille.
+                <p className="text-gray-600 mb-4">
+                  Vous n'avez pas encore créé de tokens
                 </p>
+                <Button
+                  onClick={() => navigate('/create-token')}
+                  className="bg-avalanche-red hover:bg-red-600 text-white"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Créer votre premier token
+                </Button>
               </div>
             )}
           </CardContent>

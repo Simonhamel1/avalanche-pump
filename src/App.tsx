@@ -11,7 +11,8 @@ import CreateToken from './pages/CreateToken';
 import Portfolio from './pages/Portfolio';
 import About from './pages/About';
 import NotFound from "./pages/NotFound";
-import { WalletService, WalletConnection } from './services/walletService';
+import WalletInstallPrompt from './components/WalletInstallPrompt';
+import { walletService, WalletConnection } from './services/walletService';
 import { useToast } from '@/hooks/use-toast';
 
 const queryClient = new QueryClient();
@@ -21,25 +22,39 @@ const AppContent = () => {
     address: '',
     isConnected: false
   });
+  const [showWalletInstallPrompt, setShowWalletInstallPrompt] = useState(false);
   const { toast } = useToast();
 
-  const walletService = WalletService.getInstance();
-
   useEffect(() => {
-    // Check if wallet was previously connected
-    const savedConnection = walletService.getConnection();
-    if (savedConnection.isConnected) {
-      setWalletConnection(savedConnection);
-    }
+    // Vérifier si le wallet était connecté précédemment
+    checkExistingConnection();
   }, []);
+
+  const checkExistingConnection = async () => {
+    try {
+      if (window.ethereum && window.ethereum.selectedAddress) {
+        // Reconnecter automatiquement si possible
+        const connection = await walletService.connectWallet();
+        setWalletConnection(connection);
+      }
+    } catch (error) {
+      console.log('Pas de connexion wallet existante');
+    }
+  };
 
   const handleConnectWallet = async () => {
     try {
+      if (!window.ethereum) {
+        setShowWalletInstallPrompt(true);
+        return;
+      }
+
       const connection = await walletService.connectWallet();
       setWalletConnection(connection);
+      
       toast({
         title: "Wallet connecté !",
-        description: `Adresse: ${connection.address.slice(0, 6)}...${connection.address.slice(-4)}`,
+        description: `Adresse: ${connection.address.slice(0, 6)}...${connection.address.slice(-4)} sur ${walletService.getNetworkName()}`,
       });
     } catch (error) {
       toast({
@@ -59,12 +74,36 @@ const AppContent = () => {
     });
   };
 
+  const handleSwitchToAvalanche = async () => {
+    try {
+      await walletService.switchToAvalanche();
+      // Rafraîchir la connexion après le changement de réseau
+      const connection = walletService.getConnection();
+      setWalletConnection(connection);
+      
+      toast({
+        title: "Réseau changé",
+        description: "Vous êtes maintenant connecté au réseau Avalanche",
+      });
+    } catch (error) {
+      toast({
+        title: "Erreur de réseau",
+        description: error instanceof Error ? error.message : "Impossible de changer de réseau",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white">
       <Header
         walletAddress={walletConnection.isConnected ? walletConnection.address : undefined}
+        walletBalance={walletConnection.balance}
+        networkName={walletConnection.isConnected ? walletService.getNetworkName() : undefined}
+        isAvalancheNetwork={walletService.isAvalancheNetwork()}
         onConnectWallet={handleConnectWallet}
         onDisconnectWallet={handleDisconnectWallet}
+        onSwitchToAvalanche={handleSwitchToAvalanche}
       />
       
       <main>
@@ -90,6 +129,12 @@ const AppContent = () => {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
+      
+      {/* Wallet Install Prompt */}
+      <WalletInstallPrompt 
+        isVisible={showWalletInstallPrompt}
+        onClose={() => setShowWalletInstallPrompt(false)}
+      />
     </div>
   );
 };

@@ -2,18 +2,26 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Wallet, Home, Plus, User, Info } from 'lucide-react';
+import { Wallet, Home, Plus, User, Info, ExternalLink } from 'lucide-react';
 
 interface HeaderProps {
   walletAddress?: string;
+  walletBalance?: string;
+  networkName?: string;
+  isAvalancheNetwork?: boolean;
   onConnectWallet: () => void;
   onDisconnectWallet: () => void;
+  onSwitchToAvalanche?: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ 
   walletAddress, 
+  walletBalance,
+  networkName,
+  isAvalancheNetwork,
   onConnectWallet, 
-  onDisconnectWallet 
+  onDisconnectWallet,
+  onSwitchToAvalanche
 }) => {
   const location = useLocation();
 
@@ -93,10 +101,43 @@ const Header: React.FC<HeaderProps> = ({
           {/* Wallet Connection */}
           <div className="flex items-center space-x-4">
             {walletAddress ? (
-              <div className="flex items-center space-x-2">
-                <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+              <div className="flex items-center space-x-3">
+                {/* Network indicator */}
+                {networkName && (
+                  <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    isAvalancheNetwork 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {networkName}
+                  </div>
+                )}
+                
+                {/* Balance */}
+                {walletBalance && (
+                  <div className="text-sm font-medium text-gray-700">
+                    {parseFloat(walletBalance).toFixed(4)} AVAX
+                  </div>
+                )}
+                
+                {/* Address */}
+                <div className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
                   {formatAddress(walletAddress)}
                 </div>
+                
+                {/* Switch network button if not on Avalanche */}
+                {!isAvalancheNetwork && onSwitchToAvalanche && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={onSwitchToAvalanche}
+                    className="text-orange-600 border-orange-600 hover:bg-orange-50"
+                  >
+                    <ExternalLink className="mr-1 h-3 w-3" />
+                    Avalanche
+                  </Button>
+                )}
+                
                 <Button 
                   variant="outline" 
                   size="sm"
