@@ -2,7 +2,7 @@
 import React from 'react';
 import Home from './Home';
 
-const Index = () => {
+const Index: React.FC = () => {
   return <Home isWalletConnected={false} />;
 };
 

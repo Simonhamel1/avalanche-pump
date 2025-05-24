@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TokenService, CreateTokenParams } from '@/services/tokenService';
 import { walletService } from '@/services/walletService';
 import AvalancheStatus from '@/components/AvalancheStatus';
-import { Loader2, AlertCircle, CheckCircle, Plus, Info } from 'lucide-react';
+import { Loader2, AlertCircle, CheckCircle, Plus, Info, Rocket, Zap, Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 
@@ -39,7 +40,6 @@ const CreateToken: React.FC<CreateTokenProps> = ({ isWalletConnected }) => {
 
   const tokenService = TokenService.getInstance();
 
-  // Charger les frais de création au chargement du composant
   useEffect(() => {
     if (isWalletConnected) {
       loadCreationFee();
@@ -52,10 +52,10 @@ const CreateToken: React.FC<CreateTokenProps> = ({ isWalletConnected }) => {
       const fee = await tokenService.getCreationFee();
       setCreationFee(fee);
     } catch (error) {
-      console.error('Erreur lors du chargement des frais:', error);
+      console.error('Error loading fees:', error);
       toast({
-        title: "Erreur",
-        description: "Impossible de charger les frais de création",
+        title: "Error",
+        description: "Unable to load creation fees",
         variant: "destructive"
       });
     } finally {
@@ -67,28 +67,28 @@ const CreateToken: React.FC<CreateTokenProps> = ({ isWalletConnected }) => {
     const newErrors: FormErrors = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Le nom du token est requis';
+      newErrors.name = 'Token name is required';
     }
 
     if (!formData.symbol.trim()) {
-      newErrors.symbol = 'Le symbole est requis';
+      newErrors.symbol = 'Symbol is required';
     } else if (formData.symbol.length < 3 || formData.symbol.length > 5) {
-      newErrors.symbol = 'Le symbole doit contenir entre 3 et 5 caractères';
+      newErrors.symbol = 'Symbol must be between 3 and 5 characters';
     }
 
     if (formData.decimals < 0 || formData.decimals > 18) {
-      newErrors.decimals = 'Les décimales doivent être entre 0 et 18';
+      newErrors.decimals = 'Decimals must be between 0 and 18';
     }
 
     if (formData.initialSupply <= 0) {
-      newErrors.initialSupply = 'L\'offre initiale doit être supérieure à 0';
+      newErrors.initialSupply = 'Initial supply must be greater than 0';
     }
 
     if (formData.imageUrl && formData.imageUrl.trim()) {
       try {
         new URL(formData.imageUrl);
       } catch {
-        newErrors.imageUrl = 'URL invalide';
+        newErrors.imageUrl = 'Invalid URL';
       }
     }
     setErrors(newErrors);
@@ -97,7 +97,6 @@ const CreateToken: React.FC<CreateTokenProps> = ({ isWalletConnected }) => {
 
   const handleInputChange = (field: keyof CreateTokenParams, value: string | number) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
     }
@@ -108,8 +107,8 @@ const CreateToken: React.FC<CreateTokenProps> = ({ isWalletConnected }) => {
 
     if (!isWalletConnected) {
       toast({
-        title: "Wallet requis",
-        description: "Veuillez connecter votre wallet pour créer un token",
+        title: "Wallet Required",
+        description: "Please connect your wallet to create a token",
         variant: "destructive",
       });
       return;
@@ -117,8 +116,8 @@ const CreateToken: React.FC<CreateTokenProps> = ({ isWalletConnected }) => {
 
     if (!walletService.isAvalancheNetwork()) {
       toast({
-        title: "Réseau incorrect",
-        description: "Veuillez basculer vers le réseau Avalanche pour créer un token",
+        title: "Wrong Network",
+        description: "Please switch to Avalanche network to create a token",
         variant: "destructive",
       });
       return;
@@ -132,11 +131,10 @@ const CreateToken: React.FC<CreateTokenProps> = ({ isWalletConnected }) => {
       const newToken = await tokenService.createToken(formData);
       
       toast({
-        title: "Token créé avec succès !",
-        description: `${newToken.name} (${newToken.symbol}) a été créé sur la blockchain`,
+        title: "Token Created Successfully!",
+        description: `${newToken.name} (${newToken.symbol}) has been created on the blockchain`,
       });
 
-      // Reset form
       setFormData({ 
         name: '', 
         symbol: '', 
@@ -145,13 +143,12 @@ const CreateToken: React.FC<CreateTokenProps> = ({ isWalletConnected }) => {
         imageUrl: '' 
       });
       
-      // Redirect to home page
       navigate('/');
     } catch (error) {
-      console.error('Erreur de création:', error);
+      console.error('Creation error:', error);
       toast({
-        title: "Erreur de création",
-        description: error instanceof Error ? error.message : "Une erreur est survenue lors de la création du token",
+        title: "Creation Error",
+        description: error instanceof Error ? error.message : "An error occurred while creating the token",
         variant: "destructive",
       });
     } finally {
@@ -162,30 +159,46 @@ const CreateToken: React.FC<CreateTokenProps> = ({ isWalletConnected }) => {
   const handleSwitchToAvalanche = async () => {
     try {
       await walletService.switchToAvalanche();
-      // Recharger les frais après le changement de réseau
       await loadCreationFee();
       toast({
-        title: "Réseau changé",
-        description: "Vous pouvez maintenant créer votre token sur Avalanche",
+        title: "Network Switched",
+        description: "You can now create your token on Avalanche",
       });
     } catch (error) {
       toast({
-        title: "Erreur de réseau",
-        description: error instanceof Error ? error.message : "Impossible de changer de réseau",
+        title: "Network Error",
+        description: error instanceof Error ? error.message : "Unable to switch network",
         variant: "destructive",
       });
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-avalanche-dark mb-4">
-            Créer un Nouveau Token
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-72 h-72 bg-avalanche-red/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-r from-avalanche-red/5 to-blue-500/5 rounded-full blur-3xl animate-spin [animation-duration:60s]"></div>
+      </div>
+
+      <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Hero Section */}
+        <div className="text-center mb-12">
+          <h1 className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-avalanche-red to-white mb-6 tracking-tight glow-text">
+            CREATE YOUR
+            <br />
+            <span className="text-avalanche-red">TOKEN</span>
           </h1>
-          <p className="text-gray-600">
-            Lancez votre token sur Avalanche avec notre système de bonding curve
+          <div className="flex items-center justify-center space-x-4 mb-6">
+            <Rocket className="w-8 h-8 text-avalanche-red animate-bounce" />
+            <p className="text-xl md:text-2xl text-gray-300 font-bold tracking-wide">
+              LAUNCH TO THE MOON ON AVALANCHE
+            </p>
+            <Rocket className="w-8 h-8 text-avalanche-red animate-bounce delay-500" />
+          </div>
+          <p className="text-lg text-gray-400 max-w-3xl mx-auto leading-relaxed">
+            Create your token on Avalanche with our bonding curve system
           </p>
         </div>
 
@@ -199,65 +212,67 @@ const CreateToken: React.FC<CreateTokenProps> = ({ isWalletConnected }) => {
           />
         </div>
 
-        <Card>
+        <Card className="pump-card group bg-gradient-to-br from-gray-900/90 to-gray-800/90 backdrop-blur-xl border-gray-700/50 hover:border-avalanche-red/50 transition-all duration-500 mb-8">
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Plus className="w-5 h-5 text-avalanche-red" />
-              <span>Informations du Token</span>
+            <CardTitle className="flex items-center space-x-3 text-2xl font-black text-white glow-text">
+              <Plus className="w-8 h-8 text-avalanche-red" />
+              <span>TOKEN INFORMATION</span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-8">
             {!isWalletConnected && (
-              <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-                <div className="flex items-center space-x-2">
-                  <AlertCircle className="w-5 h-5 text-yellow-600" />
-                  <p className="text-yellow-800">
-                    Connectez votre wallet pour créer un token
+              <div className="p-6 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/50 rounded-2xl backdrop-blur-xl">
+                <div className="flex items-center space-x-3">
+                  <AlertCircle className="w-6 h-6 text-yellow-400" />
+                  <p className="text-yellow-300 font-bold text-lg">
+                    Connect your wallet to create a token
                   </p>
                 </div>
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="name">Nom du Token *</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="Ex: AvalancheToken"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  disabled={isLoading || !isWalletConnected}
-                  className={errors.name ? 'border-red-500' : ''}
-                />
-                {errors.name && (
-                  <p className="text-sm text-red-600">{errors.name}</p>
-                )}
+            <form onSubmit={handleSubmit} className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-3">
+                  <Label htmlFor="name" className="text-white font-bold text-lg">Token Name *</Label>
+                  <Input
+                    id="name"
+                    type="text"
+                    placeholder="Ex: AvalancheToken"
+                    value={formData.name}
+                    onChange={(e) => handleInputChange('name', e.target.value)}
+                    disabled={isLoading || !isWalletConnected}
+                    className={`pump-input bg-gray-800/50 border-gray-600 text-white placeholder-gray-400 rounded-2xl h-14 text-lg font-medium backdrop-blur-xl ${errors.name ? 'border-red-500' : ''}`}
+                  />
+                  {errors.name && (
+                    <p className="text-red-400 font-bold">{errors.name}</p>
+                  )}
+                </div>
+
+                <div className="space-y-3">
+                  <Label htmlFor="symbol" className="text-white font-bold text-lg">Symbol *</Label>
+                  <Input
+                    id="symbol"
+                    type="text"
+                    placeholder="Ex: AVAX"
+                    value={formData.symbol}
+                    onChange={(e) => handleInputChange('symbol', e.target.value.toUpperCase())}
+                    disabled={isLoading || !isWalletConnected}
+                    maxLength={5}
+                    className={`pump-input bg-gray-800/50 border-gray-600 text-white placeholder-gray-400 rounded-2xl h-14 text-lg font-medium backdrop-blur-xl ${errors.symbol ? 'border-red-500' : ''}`}
+                  />
+                  <p className="text-gray-400 text-sm font-medium">
+                    Between 3 and 5 characters
+                  </p>
+                  {errors.symbol && (
+                    <p className="text-red-400 font-bold">{errors.symbol}</p>
+                  )}
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="symbol">Symbole *</Label>
-                <Input
-                  id="symbol"
-                  type="text"
-                  placeholder="Ex: AVAX"
-                  value={formData.symbol}
-                  onChange={(e) => handleInputChange('symbol', e.target.value.toUpperCase())}
-                  disabled={isLoading || !isWalletConnected}
-                  maxLength={5}
-                  className={errors.symbol ? 'border-red-500' : ''}
-                />
-                <p className="text-xs text-gray-500">
-                  Entre 3 et 5 caractères
-                </p>
-                {errors.symbol && (
-                  <p className="text-sm text-red-600">{errors.symbol}</p>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="decimals">Décimales *</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-3">
+                  <Label htmlFor="decimals" className="text-white font-bold text-lg">Decimals *</Label>
                   <Input
                     id="decimals"
                     type="number"
@@ -267,39 +282,39 @@ const CreateToken: React.FC<CreateTokenProps> = ({ isWalletConnected }) => {
                     value={formData.decimals}
                     onChange={(e) => handleInputChange('decimals', parseInt(e.target.value) || 0)}
                     disabled={isLoading || !isWalletConnected}
-                    className={errors.decimals ? 'border-red-500' : ''}
+                    className={`pump-input bg-gray-800/50 border-gray-600 text-white placeholder-gray-400 rounded-2xl h-14 text-lg font-medium backdrop-blur-xl ${errors.decimals ? 'border-red-500' : ''}`}
                   />
-                  <p className="text-xs text-gray-500">
-                    Nombre de décimales (0-18, recommandé: 18)
+                  <p className="text-gray-400 text-sm font-medium">
+                    Decimals (0-18, recommended: 18)
                   </p>
                   {errors.decimals && (
-                    <p className="text-sm text-red-600">{errors.decimals}</p>
+                    <p className="text-red-400 font-bold">{errors.decimals}</p>
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="initialSupply">Offre initiale *</Label>
+                <div className="space-y-3">
+                  <Label htmlFor="initialSupply" className="text-white font-bold text-lg">Initial Supply *</Label>
                   <Input
                     id="initialSupply"
                     type="number"
                     min="1"
-                    placeholder="1000000"
+                    placeholder="1,000,000"
                     value={formData.initialSupply}
                     onChange={(e) => handleInputChange('initialSupply', parseInt(e.target.value) || 0)}
                     disabled={isLoading || !isWalletConnected}
-                    className={errors.initialSupply ? 'border-red-500' : ''}
+                    className={`pump-input bg-gray-800/50 border-gray-600 text-white placeholder-gray-400 rounded-2xl h-14 text-lg font-medium backdrop-blur-xl ${errors.initialSupply ? 'border-red-500' : ''}`}
                   />
-                  <p className="text-xs text-gray-500">
-                    Nombre de tokens à créer initialement
+                  <p className="text-gray-400 text-sm font-medium">
+                    Number of tokens to create initially
                   </p>
                   {errors.initialSupply && (
-                    <p className="text-sm text-red-600">{errors.initialSupply}</p>
+                    <p className="text-red-400 font-bold">{errors.initialSupply}</p>
                   )}
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="imageUrl">URL de l'Image/Logo (optionnel)</Label>
+              <div className="space-y-3">
+                <Label htmlFor="imageUrl" className="text-white font-bold text-lg">Image/Logo URL (optional)</Label>
                 <Input
                   id="imageUrl"
                   type="url"
@@ -307,55 +322,64 @@ const CreateToken: React.FC<CreateTokenProps> = ({ isWalletConnected }) => {
                   value={formData.imageUrl || ''}
                   onChange={(e) => handleInputChange('imageUrl', e.target.value)}
                   disabled={isLoading || !isWalletConnected}
-                  className={errors.imageUrl ? 'border-red-500' : ''}
+                  className={`pump-input bg-gray-800/50 border-gray-600 text-white placeholder-gray-400 rounded-2xl h-14 text-lg font-medium backdrop-blur-xl ${errors.imageUrl ? 'border-red-500' : ''}`}
                 />
                 {errors.imageUrl && (
-                  <p className="text-sm text-red-600">{errors.imageUrl}</p>
+                  <p className="text-red-400 font-bold">{errors.imageUrl}</p>
                 )}
                 {formData.imageUrl && !errors.imageUrl && (
-                  <div className="mt-2">
-                    <p className="text-xs text-gray-500 mb-2">Aperçu:</p>
+                  <div className="mt-4">
+                    <p className="text-gray-400 text-sm font-medium mb-2">Preview:</p>
                     <img 
                       src={formData.imageUrl} 
                       alt="Preview"
-                      className="w-16 h-16 rounded-full object-cover border"
+                      className="w-20 h-20 rounded-3xl object-cover border-2 border-gray-600"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
-                        target.src = `https://via.placeholder.com/64/E84142/FFFFFF?text=${formData.symbol.charAt(0) || 'T'}`;
+                        target.src = `https://via.placeholder.com/80/E84142/FFFFFF?text=${formData.symbol.charAt(0) || 'T'}`;
                       }}
                     />
                   </div>
                 )}
               </div>
 
-              <div className="bg-blue-50 p-4 rounded-md">
-                <h3 className="font-medium text-blue-900 mb-2 flex items-center space-x-2">
-                  <Info className="w-4 h-4" />
-                  <span>Informations de création</span>
+              <div className="bg-gradient-to-r from-blue-500/20 to-cyan-500/20 p-6 rounded-3xl border border-blue-500/50 backdrop-blur-xl">
+                <h3 className="font-black text-blue-300 mb-4 flex items-center space-x-3 text-xl">
+                  <Info className="w-6 h-6" />
+                  <span>CREATION INFORMATION</span>
                 </h3>
-                <div className="text-sm text-blue-800 space-y-2">
-                  <div className="flex justify-between">
-                    <span>Frais de création:</span>
-                    <span className="font-medium">
+                <div className="text-blue-200 space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="font-bold">Creation Fee:</span>
+                    <span className="font-black text-xl">
                       {isLoadingFee ? (
-                        <Loader2 className="w-4 h-4 animate-spin inline" />
+                        <Loader2 className="w-5 h-5 animate-spin inline" />
                       ) : (
-                        creationFee ? `${creationFee} AVAX` : 'Chargement...'
+                        creationFee ? `${creationFee} AVAX` : 'Loading...'
                       )}
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Tokens à recevoir:</span>
-                    <span className="font-medium">
+                  <div className="flex justify-between items-center">
+                    <span className="font-bold">Tokens to Receive:</span>
+                    <span className="font-black text-xl">
                       {formData.initialSupply.toLocaleString()} {formData.symbol || 'TOKEN'}
                     </span>
                   </div>
-                  <div className="pt-2 border-t border-blue-200">
-                    <p className="text-xs">
-                      • Vous serez le propriétaire du contrat token<br/>
-                      • Vous pouvez mint/burn des tokens supplémentaires<br/>
-                      • Le contrat est déployé sur Avalanche C-Chain
-                    </p>
+                  <div className="pt-4 border-t border-blue-400/30">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                      <div className="flex items-center space-x-2">
+                        <Star className="w-4 h-4 text-yellow-400" />
+                        <span>You will own the token contract</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Zap className="w-4 h-4 text-green-400" />
+                        <span>You can mint/burn additional tokens</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Rocket className="w-4 h-4 text-avalanche-red" />
+                        <span>Deployed on Avalanche C-Chain</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -363,17 +387,17 @@ const CreateToken: React.FC<CreateTokenProps> = ({ isWalletConnected }) => {
               <Button
                 type="submit"
                 disabled={isLoading || !isWalletConnected || !walletService.isAvalancheNetwork()}
-                className="w-full bg-avalanche-red hover:bg-red-600 text-white"
+                className="w-full neon-button bg-gradient-to-r from-avalanche-red to-red-600 hover:from-red-600 hover:to-avalanche-red text-white font-black text-xl py-6 rounded-2xl transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:transform-none"
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Création en cours...
+                    <Loader2 className="w-6 h-6 mr-3 animate-spin" />
+                    CREATING TOKEN...
                   </>
                 ) : (
                   <>
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                    Créer le Token
+                    <CheckCircle className="w-6 h-6 mr-3" />
+                    CREATE TOKEN
                   </>
                 )}
               </Button>
