@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import TokenCard from '@/components/TokenCard';
 import BuyTokenModal from '@/components/BuyTokenModal';
 import AvalancheStatus from '@/components/AvalancheStatus';
 import { Token, TokenService } from '@/services/tokenService';
 import { walletService } from '@/services/walletService';
-import { Search, TrendingUp, Loader2, RefreshCw, Rocket, Zap, Star, Fire } from 'lucide-react';
+import { Search, TrendingUp, Loader2, RefreshCw, Rocket, Zap, Star, Flame } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -169,7 +168,7 @@ const Home: React.FC<HomeProps> = ({ isWalletConnected }) => {
               size="lg" 
               className="pump-button bg-gradient-to-r from-avalanche-red to-red-600 hover:from-red-600 hover:to-avalanche-red text-white font-black text-lg px-8 py-4 rounded-2xl transform hover:scale-105 transition-all duration-300 shadow-2xl hover:shadow-avalanche-red/50"
             >
-              <Fire className="mr-2 h-6 w-6" />
+              <Flame className="mr-2 h-6 w-6" />
               START PUMPING
             </Button>
             <Button 
@@ -303,7 +302,7 @@ const Home: React.FC<HomeProps> = ({ isWalletConnected }) => {
                   size="lg"
                   className="pump-button bg-gradient-to-r from-avalanche-red to-red-600 hover:from-red-600 hover:to-avalanche-red text-white font-black text-xl px-12 py-6 rounded-2xl transform hover:scale-110 transition-all duration-300 shadow-2xl"
                 >
-                  <Fire className="mr-3 h-8 w-8" />
+                  <Flame className="mr-3 h-8 w-8" />
                   CREATE YOUR TOKEN NOW
                 </Button>
               </div>

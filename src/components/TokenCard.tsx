@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Token } from '@/services/tokenService';
-import { ShoppingCart, TrendingUp, Copy, Zap, Star, Fire } from 'lucide-react';
+import { ShoppingCart, TrendingUp, Copy, Zap, Star, Flame } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface TokenCardProps {
@@ -180,7 +179,7 @@ const TokenCard: React.FC<TokenCardProps> = ({
         >
           {isWalletConnected ? (
             <>
-              <Fire className="w-5 h-5 mr-2 animate-pulse" />
+              <Flame className="w-5 h-5 mr-2 animate-pulse" />
               PUMP IT! 🚀
             </>
           ) : (
