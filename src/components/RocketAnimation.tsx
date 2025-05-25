@@ -122,7 +122,7 @@ const RocketAnimation: React.FC<RocketAnimationProps> = ({
           )}
         </div>
 
-        <style jsx>{`
+        <style>{`
           @keyframes rocket-launch {
             0% {
               transform: translateY(0) scale(1);
