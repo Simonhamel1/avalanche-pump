@@ -23,29 +23,8 @@ const TokenCard: React.FC<TokenCardProps> = ({
     return `${price.toFixed(6)} AVAX`;
   };
 
-  const formatMarketCap = (marketCap?: number) => {
-    if (!marketCap) return "N/A";
-    
-    // Divise par 1×10^18 pour réduire la magnitude
-    const adjustedMarketCap = marketCap / Math.pow(10, 18);
-    
-    // Affichage avec espaces comme séparateurs (format français)
-    return `${Math.round(adjustedMarketCap).toLocaleString('fr-FR').replace(/,/g, ' ').replace(/\u00A0/g, ' ')} AVAX`;
-  };
-
   const formatAddress = (address: string) => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
-  };
-
-  const formatSupply = (supply: string, decimals: number) => {
-    const num = parseFloat(supply);
-    if (isNaN(num) || num === 0) return '0';
-    
-    // Divise par 1×10^18 pour réduire la magnitude
-    const adjustedNum = num / Math.pow(10, 18);
-    
-    // Affichage avec espaces comme séparateurs (format français)
-    return Math.round(adjustedNum).toLocaleString('fr-FR').replace(/,/g, ' ').replace(/\u00A0/g, ' ');
   };
 
   const copyAddress = async () => {
@@ -82,15 +61,7 @@ const TokenCard: React.FC<TokenCardProps> = ({
       <CardHeader className="relative z-10 pb-3">
         <div className="flex items-center space-x-4">
           <div className="relative">
-            <img 
-              src={token.imageUrl || `https://via.placeholder.com/56/E84142/FFFFFF?text=${token.symbol.charAt(0)}`} 
-              alt={token.name}
-              className="w-14 h-14 rounded-2xl object-cover ring-2 ring-gray-600 group-hover:ring-avalanche-red transition-all duration-300"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src = `https://via.placeholder.com/56/E84142/FFFFFF?text=${token.symbol.charAt(0)}`;
-              }}
-            />
+            {}
             <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-400 rounded-full border-2 border-gray-800 animate-pulse"></div>
           </div>
           <div className="flex-1">
@@ -127,7 +98,9 @@ const TokenCard: React.FC<TokenCardProps> = ({
               MCAP
             </p>
             <p className="font-black text-lg text-green-400">
-              {formatMarketCap(token.marketCap)}
+              {token.currentPrice && token.totalSupply 
+                ? `${(token.currentPrice * parseFloat(token.totalSupply)).toLocaleString(undefined, {maximumFractionDigits: 2})} AVAX`
+                : 'N/A'}
             </p>
           </div>
         </div>
@@ -138,7 +111,7 @@ const TokenCard: React.FC<TokenCardProps> = ({
               💎 SUPPLY
             </p>
             <p className="font-black text-lg text-white">
-              {formatSupply(token.totalSupply, token.decimals)}
+                {token.totalSupply ? `${(parseFloat(token.totalSupply)).toFixed(2).replace(/,/g, ' ').replace(/\u00A0/g, ' ')}` : '0'}
             </p>
           </div>
           <div className="bg-gray-800/50 rounded-2xl p-4 backdrop-blur-sm">
@@ -146,7 +119,7 @@ const TokenCard: React.FC<TokenCardProps> = ({
               🏦 YOUR BAG
             </p>
             <p className="font-black text-lg text-cyan-400">
-              {token.userBalance ? `${(parseFloat(token.userBalance) / Math.pow(10, 18)).toFixed(2).replace(/,/g, ' ').replace(/\u00A0/g, ' ')}` : '0'}
+                {token.userBalance ? `${(parseFloat(token.userBalance)).toFixed(2).replace(/,/g, ' ').replace(/\u00A0/g, ' ')}` : '0'}
             </p>
           </div>
         </div>
