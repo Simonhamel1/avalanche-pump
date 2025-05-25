@@ -49,7 +49,7 @@ const Gambling: React.FC = () => {
       const tokens = await tokenService.getMyTokens();
       setMyTokens(tokens);
       
-      // Vérifier la compatibilité gambling pour chaque token
+      // Check gambling compatibility for each token
       setIsCheckingCompatibility(true);
       const compatibilityMap = new Map<string, boolean>();
       
@@ -58,7 +58,7 @@ const Gambling: React.FC = () => {
           const isCompatible = await checkIfTokenSupportsGambling(token);
           compatibilityMap.set(token.address, isCompatible);
         } catch (error) {
-          console.error(`Erreur vérification gambling pour ${token.address}:`, error);
+          console.error(`Error checking gambling compatibility for ${token.address}:`, error);
           compatibilityMap.set(token.address, false);
         }
       }));
@@ -70,8 +70,8 @@ const Gambling: React.FC = () => {
     } catch (error) {
       console.error('Error loading user tokens:', error);
       toast({
-        title: "Erreur de chargement",
-        description: "Impossible de charger vos tokens",
+        title: "Loading Error",
+        description: "Unable to load your tokens",
         variant: "destructive"
       });
       setMyTokens([]);
@@ -87,13 +87,13 @@ const Gambling: React.FC = () => {
       setIsWalletConnected(true);
       await loadMyTokens();
       toast({
-        title: "Wallet connecté",
-        description: "Votre wallet a été connecté avec succès",
+        title: "Wallet Connected",
+        description: "Your wallet has been connected successfully",
       });
     } catch (error) {
       toast({
-        title: "Erreur de connexion",
-        description: error instanceof Error ? error.message : "Impossible de connecter le wallet",
+        title: "Connection Error",
+        description: error instanceof Error ? error.message : "Unable to connect wallet",
         variant: "destructive"
       });
     }
@@ -105,22 +105,22 @@ const Gambling: React.FC = () => {
     
     if (supportsGambling === false) {
       toast({
-        title: "Token non compatible",
-        description: "Ce token ne supporte pas le gambling. Seuls les tokens créés via notre factory peuvent être utilisés pour jouer.",
+        title: "Incompatible Token",
+        description: "This token doesn't support gambling. Only tokens created via our factory can be used for gaming.",
         variant: "destructive"
       });
       return;
     }
     
-    // Si on n'a pas encore vérifié, vérifier maintenant
+    // If we haven't checked yet, check now
     if (supportsGambling === undefined) {
       const isCompatible = await checkIfTokenSupportsGambling(token);
       setGamblingCompatibility(prev => new Map(prev).set(token.address, isCompatible));
       
       if (!isCompatible) {
         toast({
-          title: "Token non compatible",
-          description: "Ce token ne supporte pas le gambling. Seuls les tokens créés via notre factory peuvent être utilisés pour jouer.",
+          title: "Incompatible Token",
+          description: "This token doesn't support gambling. Only tokens created via our factory can be used for gaming.",
           variant: "destructive"
         });
         return;
@@ -132,7 +132,7 @@ const Gambling: React.FC = () => {
 
   const handleBackToTokens = () => {
     setSelectedToken(null);
-    loadMyTokens(); // Rafraîchir les balances
+    loadMyTokens(); // Refresh balances
   };
 
   const formatBalance = (balance: string | undefined): string => {
@@ -166,47 +166,47 @@ const Gambling: React.FC = () => {
                     <Dice1 className="w-8 h-8 text-avalanche-red animate-bounce" />
                     <div className="text-center flex-1">
                       <p className="text-xl md:text-2xl text-gray-300 font-bold tracking-wide">
-                        LANCEZ LE DÉ & GAGNEZ GROS
+                        ROLL THE DICE & WIN BIG
                       </p>
                       {isCheckingCompatibility && (
                         <p className="text-sm text-gray-500 mt-1 animate-pulse">
-                          Vérification de la compatibilité...
+                          Checking compatibility...
                         </p>
                       )}
                     </div>
                     <Dice1 className="w-8 h-8 text-avalanche-red animate-bounce delay-500" />
                   </div>
           <p className="text-lg text-gray-400 max-w-3xl mx-auto leading-relaxed">
-            Utilisez vos tokens pour jouer au dé et multiplier vos gains. 
-            Chaque lancer est vérifié par Chainlink VRF pour un jeu équitable et transparent.
+            Use your tokens to play dice and multiply your winnings. 
+            Every roll is verified by Chainlink VRF for fair and transparent gaming.
           </p>
         </div>
 
         {/* Affichage conditionnel : sélection de token ou jeu */}
         {selectedToken ? (
           <div className="space-y-6">
-            {/* Bouton retour */}
+            {/* Back button */}
             <Button 
               onClick={handleBackToTokens}
               variant="outline"
               className="mb-6 border-avalanche-red text-avalanche-red hover:bg-avalanche-red hover:text-white"
             >
-              ← Retour aux tokens
+              ← Back to tokens
             </Button>
             
-            {/* Token sélectionné */}
+            {/* Selected token */}
             <Card className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-xl border-avalanche-red/50 mb-6">
               <CardHeader>
                 <CardTitle className="text-center text-2xl font-black text-white">
-                  🎯 Token Sélectionné: {selectedToken.name} ({selectedToken.symbol})
+                  🎯 Selected Token: {selectedToken.name} ({selectedToken.symbol})
                 </CardTitle>
                 <p className="text-center text-gray-400">
-                  Solde: {selectedToken.userBalance} {selectedToken.symbol}
+                  Balance: {selectedToken.userBalance} {selectedToken.symbol}
                 </p>
               </CardHeader>
             </Card>
             
-            {/* Jeu de dés */}
+            {/* Dice game */}
             <DiceGame 
               token={selectedToken} 
               onBetPlaced={handleBackToTokens}
@@ -219,10 +219,10 @@ const Gambling: React.FC = () => {
               <div className="text-center py-20">
                 <Wallet className="w-24 h-24 text-gray-600 mx-auto mb-6 animate-bounce" />
                 <p className="text-3xl font-black text-white mb-4 glow-text">
-                  CONNECTEZ VOTRE WALLET
+                  CONNECT YOUR WALLET
                 </p>
                 <p className="text-xl text-gray-400 font-bold mb-8">
-                  Connectez votre wallet pour voir vos tokens et commencer à jouer
+                  Connect your wallet to see your tokens and start playing
                 </p>
                 <Button 
                   onClick={handleConnectWallet}
@@ -230,7 +230,7 @@ const Gambling: React.FC = () => {
                   className="pump-button bg-gradient-to-r from-avalanche-red to-red-600 hover:from-red-600 hover:to-avalanche-red text-white font-black text-xl px-12 py-6 rounded-2xl transform hover:scale-110 transition-all duration-300 shadow-2xl"
                 >
                   <Wallet className="mr-3 h-8 w-8" />
-                  CONNECTER WALLET
+                  CONNECT WALLET
                 </Button>
               </div>
             ) : (
@@ -242,7 +242,7 @@ const Gambling: React.FC = () => {
                       <Coins className="w-10 h-10 text-avalanche-red glow-icon" />
                       <div className="text-right">
                         <p className="text-4xl font-black text-white glow-text">{myTokens.length}</p>
-                        <p className="text-gray-400 font-bold tracking-wide">MES TOKENS</p>
+                        <p className="text-gray-400 font-bold tracking-wide">MY TOKENS</p>
                       </div>
                     </div>
                     <div className="w-full bg-gray-700 rounded-full h-2">
