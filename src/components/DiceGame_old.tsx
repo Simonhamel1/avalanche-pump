@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Dice1, Dice2, Dice3, Dice4, Dice5, Dice6, Coins, Trophy, Flame, Loader2 } from 'lucide-react';
 import { Token } from '@/services/tokenService';
-import { getDiceGameService, BetResult, GameStats } from '@/services/diceGameService';
+import { getDiceGameService, BetResult, GameStats, PayoutCalculation } from '@/services/diceGameService';
 import { useToast } from '@/hooks/use-toast';
 
 interface DiceGameProps {
@@ -30,13 +31,6 @@ const DiceGame: React.FC<DiceGameProps> = ({ token, onBetPlaced }) => {
 
   useEffect(() => {
     initializeGame();
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      // Cleanup lors du démontage du composant
-      diceGameService.cleanup();
-    };
   }, []);
 
   const initializeGame = async () => {
@@ -84,14 +78,15 @@ const DiceGame: React.FC<DiceGameProps> = ({ token, onBetPlaced }) => {
 
   const handleBetResult = (result: { requestId: string; randomNumber: string; payout: string; won: boolean }) => {
     const randomNum = parseInt(result.randomNumber);
+    const roll = randomNum % 10000;
     const diceValue = (randomNum % 6) + 1;
     setDiceResult(diceValue);
     
     const won = result.won;
     if (won) {
-      const betAmt = parseFloat(betAmount || "0");
+      const betAmt = parseFloat(betAmount);
       const payout = parseFloat(result.payout);
-      const multiplier = betAmt > 0 ? (payout / betAmt).toFixed(1) : "0";
+      const multiplier = (payout / betAmt).toFixed(1);
       setLastWin({ amount: result.payout, multiplier: `${multiplier}x` });
     } else {
       setLastWin(null);
@@ -99,7 +94,6 @@ const DiceGame: React.FC<DiceGameProps> = ({ token, onBetPlaced }) => {
     
     setIsRolling(false);
     setAnimatingDice(false);
-    setCurrentRequestId(null);
     
     toast({
       title: won ? "🎉 Victoire !" : "😔 Défaite",
@@ -174,6 +168,42 @@ const DiceGame: React.FC<DiceGameProps> = ({ token, onBetPlaced }) => {
       });
     }
   };
+    }
+    
+    if (betValue > userBalance) {
+      toast({
+        title: "Solde insuffisant",
+        description: `Vous n'avez que ${token.userBalance} ${token.symbol}`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setIsRolling(true);
+      setAnimatingDice(true);
+      setDiceResult(null);
+      setLastWin(null);
+      
+      await gamblingService.placeBet(token.address, betAmount);
+      
+      toast({
+        title: "🎲 Dé lancé !",
+        description: "Le hasard décide de votre sort...",
+      });
+      
+      setBetAmount('');
+    } catch (error) {
+      setIsRolling(false);
+      setAnimatingDice(false);
+      console.error('Erreur lors du pari:', error);
+      toast({
+        title: "Erreur",
+        description: error instanceof Error ? error.message : "Erreur lors du placement du pari",
+        variant: "destructive"
+      });
+    }
+  };
 
   const getDiceIcon = (value: number | null, isAnimating: boolean) => {
     if (isAnimating) {
@@ -191,48 +221,27 @@ const DiceGame: React.FC<DiceGameProps> = ({ token, onBetPlaced }) => {
     return <DiceIcon className="w-16 h-16 text-avalanche-red animate-bounce" />;
   };
 
-  const getPayoutInfo = () => [
-    { range: '0-24%', multiplier: '0x (Perte)', probability: '25%', color: 'text-red-400' },
-    { range: '25-49%', multiplier: '1x (Remboursement)', probability: '25%', color: 'text-yellow-400' },
-    { range: '50-79%', multiplier: '1.5x', probability: '30%', color: 'text-blue-400' },
-    { range: '80-94%', multiplier: '3x', probability: '15%', color: 'text-green-400' },
-    { range: '95-98%', multiplier: '10x', probability: '4%', color: 'text-purple-400' },
-    { range: '99%', multiplier: '50x (JACKPOT!)', probability: '1%', color: 'text-orange-400' }
+  const getWinConditions = () => [
+    { dice: [1], multiplier: '0x', probability: '16.7%', color: 'text-red-400' },
+    { dice: [2], multiplier: '0x', probability: '16.7%', color: 'text-red-400' },
+    { dice: [3], multiplier: '1.5x', probability: '16.7%', color: 'text-yellow-400' },
+    { dice: [4], multiplier: '2x', probability: '16.7%', color: 'text-blue-400' },
+    { dice: [5], multiplier: '5x', probability: '16.7%', color: 'text-green-400' },
+    { dice: [6], multiplier: '10x', probability: '16.7%', color: 'text-purple-400' }
   ];
 
   return (
-    <div className="space-y-6 p-4">
+    <div className="space-y-6">
       {/* Zone de jeu principale */}
       <Card className="bg-gradient-to-br from-gray-800/90 to-gray-900/90 border-avalanche-red/30 overflow-hidden">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-avalanche-red to-red-400">
-            🎲 JEU DE DÉ CHAINLINK VRF
+            🎲 JEU DE DÉ - {token.symbol}
           </CardTitle>
-          <p className="text-gray-400">Pariez avec vos tokens et tentez votre chance !</p>
-          {gameStats && (
-            <div className="text-sm text-gray-500">
-              Mise minimum: {gameStats.minimumBet} tokens | House Edge: {gameStats.houseEdge}%
-            </div>
-          )}
+          <p className="text-gray-400">Lancez le dé et tentez votre chance !</p>
         </CardHeader>
         
         <CardContent className="space-y-6">
-          {/* Informations du joueur */}
-          <div className="bg-gray-700/30 rounded-lg p-4">
-            <div className="grid grid-cols-2 gap-4 text-center">
-              <div>
-                <p className="text-sm text-gray-400">Votre solde</p>
-                <p className="text-xl font-bold text-white">{playerBalance} tokens</p>
-              </div>
-              {gameStats && (
-                <div>
-                  <p className="text-sm text-gray-400">Taux de victoire</p>
-                  <p className="text-xl font-bold text-green-400">{gameStats.winRate}%</p>
-                </div>
-              )}
-            </div>
-          </div>
-
           {/* Dé central */}
           <div className="flex flex-col items-center space-y-4">
             <div className="relative">
@@ -246,19 +255,12 @@ const DiceGame: React.FC<DiceGameProps> = ({ token, onBetPlaced }) => {
               )}
             </div>
             
-            {currentRequestId && isRolling && (
-              <div className="text-center">
-                <p className="text-sm text-gray-400">Request ID: {currentRequestId}</p>
-                <p className="text-yellow-400 font-medium">En attente du VRF...</p>
-              </div>
-            )}
-            
             {diceResult && (
               <div className="text-center">
                 <p className="text-xl font-bold text-white">Résultat: {diceResult}</p>
                 {lastWin ? (
                   <p className="text-green-400 font-bold">
-                    🎉 Gain: {lastWin.amount} tokens ({lastWin.multiplier})
+                    🎉 Gain: {lastWin.amount} {token.symbol}
                   </p>
                 ) : (
                   <p className="text-red-400 font-bold">
@@ -275,38 +277,35 @@ const DiceGame: React.FC<DiceGameProps> = ({ token, onBetPlaced }) => {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Montant du pari (tokens)
+                Montant du pari ({token.symbol})
               </label>
               <Input
                 type="number"
                 value={betAmount}
                 onChange={(e) => setBetAmount(e.target.value)}
-                placeholder={gameStats ? `Min: ${gameStats.minimumBet}` : "Entrez votre mise"}
+                placeholder={`Min: ${minimumBet}`}
                 className="bg-gray-700/50 border-gray-600 text-white text-center text-lg font-bold"
                 disabled={isRolling}
-                step="0.01"
-                min={gameStats?.minimumBet || "0"}
-                max={playerBalance}
               />
               <p className="text-xs text-gray-400 mt-1">
-                Solde disponible: {playerBalance} tokens
+                Solde: {token.userBalance || '0'} {token.symbol}
               </p>
             </div>
             
             <Button
               onClick={placeBet}
-              disabled={isRolling || !betAmount || !gameStats}
-              className="w-full bg-gradient-to-r from-avalanche-red to-red-600 hover:from-red-600 hover:to-avalanche-red text-white font-black py-4 text-lg rounded-2xl transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:transform-none"
+              disabled={isRolling || !betAmount}
+              className="w-full bg-gradient-to-r from-avalanche-red to-red-600 hover:from-red-600 hover:to-avalanche-red text-white font-black py-4 text-lg rounded-2xl transform hover:scale-105 transition-all duration-300"
             >
               {isRolling ? (
                 <>
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  ATTENTE DU VRF...
+                  LANCEMENT DU DÉ...
                 </>
               ) : (
                 <>
                   <Flame className="mr-2 h-5 w-5" />
-                  PLACER LE PARI
+                  LANCER LE DÉ
                 </>
               )}
             </Button>
@@ -319,30 +318,24 @@ const DiceGame: React.FC<DiceGameProps> = ({ token, onBetPlaced }) => {
         <CardHeader>
           <CardTitle className="text-lg font-bold text-green-400 flex items-center">
             <Trophy className="mr-2 h-5 w-5" />
-            Table des Gains (Chainlink VRF)
+            Table des Gains
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {getPayoutInfo().map((payout, index) => (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+            {getWinConditions().map((condition, index) => (
               <div key={index} className="bg-gray-700/30 rounded-lg p-3 text-center">
-                <div className="text-sm font-medium text-gray-300 mb-1">
-                  Roll {payout.range}
+                <div className="text-lg font-bold text-white mb-1">
+                  Dé {condition.dice.join(',')}
                 </div>
-                <Badge 
-                  variant={payout.multiplier.includes('0x') ? 'destructive' : 'default'} 
-                  className="mb-2"
-                >
-                  {payout.multiplier}
+                <Badge variant={condition.multiplier === '0x' ? 'destructive' : 'default'} className="mb-2">
+                  {condition.multiplier}
                 </Badge>
-                <div className={`text-xs font-medium ${payout.color}`}>
-                  {payout.probability}
+                <div className={`text-xs ${condition.color}`}>
+                  {condition.probability}
                 </div>
               </div>
             ))}
-          </div>
-          <div className="mt-4 text-xs text-gray-500 text-center">
-            Le résultat est déterminé par Chainlink VRF pour une randomness vérifiable
           </div>
         </CardContent>
       </Card>
@@ -353,56 +346,24 @@ const DiceGame: React.FC<DiceGameProps> = ({ token, onBetPlaced }) => {
           <CardHeader>
             <CardTitle className="text-lg font-bold text-blue-400 flex items-center">
               <Coins className="mr-2 h-5 w-5" />
-              Historique des Paris ({betHistory.length})
+              Historique Récent
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2 max-h-64 overflow-y-auto">
-              {betHistory.slice(0, 10).map((bet, index) => (
-                <div key={index} className="flex justify-between items-center p-3 bg-gray-700/30 rounded text-sm">
-                  <div className="flex-1">
-                    <div className="text-gray-300">
-                      Pari: {bet.betAmount} tokens
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      Request ID: {bet.requestId.slice(0, 8)}...
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    {bet.fulfilled ? (
-                      <div>
-                        <span className={bet.won ? 'text-green-400' : 'text-red-400'}>
-                          {bet.won ? `+${bet.payout}` : '0'} tokens
-                        </span>
-                        <div className="text-xs text-gray-500">
-                          Roll: {parseInt(bet.randomNumber) % 10000}
-                        </div>
-                      </div>
-                    ) : (
-                      <Badge variant="outline" className="text-xs">En attente VRF</Badge>
-                    )}
-                  </div>
+            <div className="space-y-2 max-h-32 overflow-y-auto">
+              {betHistory.slice(0, 5).map((bet, index) => (
+                <div key={index} className="flex justify-between items-center p-2 bg-gray-700/30 rounded text-sm">
+                  <span className="text-gray-300">Pari: {bet.betAmount} {token.symbol}</span>
+                  {bet.status === 'completed' && bet.result ? (
+                    <span className={bet.result.won ? 'text-green-400' : 'text-red-400'}>
+                      {bet.result.won ? `+${bet.result.payout}` : '0'} {token.symbol}
+                    </span>
+                  ) : (
+                    <Badge variant="outline" className="text-xs">En cours</Badge>
+                  )}
                 </div>
               ))}
             </div>
-            {gameStats && (
-              <div className="mt-4 pt-4 border-t border-gray-700">
-                <div className="grid grid-cols-3 gap-4 text-center text-sm">
-                  <div>
-                    <p className="text-gray-400">Total gagné</p>
-                    <p className="text-green-400 font-bold">{gameStats.totalWinnings}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-400">Total perdu</p>
-                    <p className="text-red-400 font-bold">{gameStats.totalLosses}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-400">Paris totaux</p>
-                    <p className="text-white font-bold">{gameStats.totalBets}</p>
-                  </div>
-                </div>
-              </div>
-            )}
           </CardContent>
         </Card>
       )}

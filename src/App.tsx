@@ -31,19 +31,21 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
+        <div className="h-screen w-screen overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-black">
           <Header 
             isWalletConnected={isWalletConnected}
             onWalletConnection={handleWalletConnection}
           />
-          <Routes>
-            <Route path="/" element={<Home isWalletConnected={isWalletConnected} />} />
-            <Route path="/create" element={<CreateToken isWalletConnected={isWalletConnected} />} />
-            <Route path="/portfolio" element={<Portfolio isWalletConnected={isWalletConnected} />} />
-            <Route path="/gambling" element={<Gambling />} />
-            <Route path="/about" element={<About />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <div className="h-[calc(100vh-64px)] overflow-y-auto">
+            <Routes>
+              <Route path="/" element={<Home isWalletConnected={isWalletConnected} />} />
+              <Route path="/create" element={<CreateToken isWalletConnected={isWalletConnected} />} />
+              <Route path="/portfolio" element={<Portfolio isWalletConnected={isWalletConnected} />} />
+              <Route path="/gambling" element={<Gambling />} />
+              <Route path="/about" element={<About />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </div>
           <Toaster />
         </div>
       </Router>
