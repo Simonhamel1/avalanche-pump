@@ -28,27 +28,27 @@ const DiceGame: React.FC<DiceGameProps> = ({ token, onBetPlaced }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Créer une instance du service pour ce token spécifique
+    // Create a service instance for this specific token
     const service = createDiceGameServiceForToken(token.address);
     setDiceGameService(service);
     
-    // Initialiser le jeu avec le nouveau service
+    // Initialize the game with the new service
     initializeGameWithService(service);
 
     return () => {
-      // Cleanup lors du changement de token ou démontage
+      // Cleanup when token changes or component unmounts
       service.cleanup();
     };
   }, [token.address]);
 
-  // Mettre à jour le solde quand le token change
+  // Update balance when token changes
   useEffect(() => {
     setPlayerBalance(token.userBalance || '0');
   }, [token.userBalance]);
 
   useEffect(() => {
     return () => {
-      // Cleanup lors du démontage du composant
+      // Cleanup when component unmounts
       if (diceGameService) {
         diceGameService.cleanup();
       }

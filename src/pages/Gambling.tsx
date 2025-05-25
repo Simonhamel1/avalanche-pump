@@ -34,11 +34,11 @@ const Gambling: React.FC = () => {
 
   const checkIfTokenSupportsGambling = async (token: Token): Promise<boolean> => {
     try {
-      // Vérifier si le token a été créé par notre factory
+      // Check if the token was created by our factory
       const isFactoryToken = await tokenService.isFactoryToken(token.address);
       return isFactoryToken;
     } catch (error) {
-      console.error('Erreur lors de la vérification du gambling:', error);
+      console.error('Error checking gambling compatibility:', error);
       return false;
     }
   };
@@ -100,7 +100,7 @@ const Gambling: React.FC = () => {
   };
 
   const handleSelectToken = async (token: Token) => {
-    // Vérifier si le token supporte le gambling depuis le cache
+    // Check if the token supports gambling from cache
     const supportsGambling = gamblingCompatibility.get(token.address);
     
     if (supportsGambling === false) {
@@ -182,7 +182,7 @@ const Gambling: React.FC = () => {
           </p>
         </div>
 
-        {/* Affichage conditionnel : sélection de token ou jeu */}
+        {/* Conditional display: token selection or game */}
         {selectedToken ? (
           <div className="space-y-6">
             {/* Back button */}
@@ -242,7 +242,7 @@ const Gambling: React.FC = () => {
                       <Coins className="w-10 h-10 text-avalanche-red glow-icon" />
                       <div className="text-right">
                         <p className="text-4xl font-black text-white glow-text">{myTokens.length}</p>
-                        <p className="text-gray-400 font-bold tracking-wide">MES TOKENS</p>
+                        <p className="text-gray-400 font-bold tracking-wide">MY TOKENS</p>
                       </div>
                     </div>
                     <div className="w-full bg-gray-700 rounded-full h-2">
@@ -282,7 +282,7 @@ const Gambling: React.FC = () => {
                   <div className="flex items-center justify-center py-20">
                     <div className="text-center">
                       <Loader2 className="w-12 h-12 animate-spin text-avalanche-red mx-auto mb-4 glow-icon" />
-                      <span className="text-2xl font-bold text-white glow-text">Chargement de vos tokens...</span>
+                      <span className="text-2xl font-bold text-white glow-text">Loading your tokens...</span>
                     </div>
                   </div>
                 ) : (
@@ -292,20 +292,20 @@ const Gambling: React.FC = () => {
                       <>
                         <div className="mb-8">
                           <h2 className="text-3xl font-black text-white mb-4 text-center glow-text">
-                            🎲 VOS TOKENS POUR LE JEU DE DÉ
+                            🎲 YOUR TOKENS FOR DICE GAME
                           </h2>
                           <div className="text-center space-y-2">
                             <p className="text-gray-400 font-bold">
-                              Sélectionnez un token compatible pour commencer à jouer
+                              Select a compatible token to start playing
                             </p>
                             <div className="flex items-center justify-center space-x-6 text-sm">
                               <div className="flex items-center space-x-2">
                                 <Check className="w-4 h-4 text-green-400" />
-                                <span className="text-green-400">Compatible Gambling</span>
+                                <span className="text-green-400">Gambling Compatible</span>
                               </div>
                               <div className="flex items-center space-x-2">
                                 <X className="w-4 h-4 text-red-400" />
-                                <span className="text-red-400">Non Compatible</span>
+                                <span className="text-red-400">Not Compatible</span>
                               </div>
                             </div>
                           </div>
@@ -353,7 +353,7 @@ const Gambling: React.FC = () => {
                                             ) : isGamblingCompatible === false ? (
                                               <Badge className="text-xs bg-red-500/20 text-red-400 border-red-500/50">
                                                 <X className="w-3 h-3 mr-1" />
-                                                NON COMPATIBLE
+                                                NOT COMPATIBLE
                                               </Badge>
                                             ) : null}
                                           </div>
@@ -396,22 +396,22 @@ const Gambling: React.FC = () => {
                                       {isCheckingThisToken ? (
                                         <>
                                           <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                                          VÉRIFICATION...
+                                          CHECKING...
                                         </>
                                       ) : isGamblingCompatible === true ? (
                                         <>
                                           <Flame className="mr-2 h-5 w-5" />
-                                          JOUER AU DÉ
+                                          PLAY DICE
                                         </>
                                       ) : isGamblingCompatible === false ? (
                                         <>
                                           <X className="mr-2 h-5 w-5" />
-                                          NON COMPATIBLE
+                                          NOT COMPATIBLE
                                         </>
                                       ) : (
                                         <>
                                           <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                                          CHARGEMENT...
+                                          LOADING...
                                         </>
                                       )}
                                     </Button>
@@ -426,17 +426,17 @@ const Gambling: React.FC = () => {
                       <div className="text-center py-20">
                         <AlertTriangle className="w-24 h-24 text-gray-600 mx-auto mb-6 animate-bounce" />
                         <p className="text-3xl font-black text-white mb-4 glow-text">
-                          AUCUN TOKEN TROUVÉ
+                          NO TOKENS FOUND
                         </p>
                         <p className="text-xl text-gray-400 font-bold mb-8">
-                          Vous devez créer des tokens pour pouvoir jouer
+                          You need to create tokens to be able to play
                         </p>
                         <Button 
                           size="lg"
                           className="pump-button bg-gradient-to-r from-avalanche-red to-red-600 hover:from-red-600 hover:to-avalanche-red text-white font-black text-xl px-12 py-6 rounded-2xl transform hover:scale-110 transition-all duration-300 shadow-2xl"
                         >
                           <Star className="mr-3 h-8 w-8" />
-                          CRÉER UN TOKEN
+                          CREATE TOKEN
                         </Button>
                       </div>
                     )}
