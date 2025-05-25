@@ -211,7 +211,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ isWalletConnected, walletAddress 
                 onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
                 variant="outline"
                 size="sm"
-                className="pump-button-outline border-2 border-white text-white hover:bg-white hover:text-black font-bold px-4 py-3 rounded-2xl transition-all duration-300"
+                className="pump-button-outline border-2 border-white text-black hover:bg-white hover:text-black font-bold px-4 py-3 rounded-2xl transition-all duration-300"
               >
                 {viewMode === 'grid' ? (
                   <List className="w-5 h-5" />
@@ -261,7 +261,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ isWalletConnected, walletAddress 
                   {totalPortfolioValue.toFixed(4)} AVAX
                 </div>
                 <p className="text-gray-400 font-bold">
-                  ≈ ${(totalPortfolioValue * 30).toFixed(2)} USD
+                  ≈ ${(totalPortfolioValue * 22.90).toFixed(2)} USD
                 </p>
               </CardContent>
             </Card>
@@ -332,7 +332,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ isWalletConnected, walletAddress 
 
         {/* Tabs for different views */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-8 bg-gray-800/50 backdrop-blur-xl rounded-2xl p-2 border border-gray-700/50">
+          <TabsList className="grid w-full grid-cols-2 mb-8 bg-transparent p-2">
             <TabsTrigger 
               value="portfolio" 
               className="flex items-center gap-3 data-[state=active]:bg-avalanche-red data-[state=active]:text-white text-gray-400 font-bold text-lg py-4 rounded-xl transition-all duration-300" 

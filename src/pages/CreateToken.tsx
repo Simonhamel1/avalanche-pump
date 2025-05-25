@@ -35,6 +35,7 @@ const CreateToken: React.FC<CreateTokenProps> = ({ isWalletConnected }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingFee, setIsLoadingFee] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
+  const [showRocketAnimation, setShowRocketAnimation] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -130,9 +131,12 @@ const CreateToken: React.FC<CreateTokenProps> = ({ isWalletConnected }) => {
     try {
       const newToken = await tokenService.createToken(formData);
       
+      // Déclencher l'animation de la fusée
+      setShowRocketAnimation(true);
+      
       toast({
-        title: "Token Created Successfully!",
-        description: `${newToken.name} (${newToken.symbol}) has been created on the blockchain`,
+        title: "🚀 TOKEN LAUNCHED TO THE MOON! 🚀",
+        description: `${newToken.name} (${newToken.symbol}) is now flying through space!`,
       });
 
       setFormData({ 
@@ -143,7 +147,11 @@ const CreateToken: React.FC<CreateTokenProps> = ({ isWalletConnected }) => {
         imageUrl: '' 
       });
       
-      navigate('/');
+      // Attendre la fin de l'animation avant de naviguer
+      setTimeout(() => {
+        setShowRocketAnimation(false);
+        navigate('/');
+      }, 4000);
     } catch (error) {
       console.error('Creation error:', error);
       toast({
@@ -175,6 +183,93 @@ const CreateToken: React.FC<CreateTokenProps> = ({ isWalletConnected }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black relative overflow-hidden">
+      {/* Animation de la méga fusée */}
+      {showRocketAnimation && (
+        <div className="fixed inset-0 z-50 pointer-events-none overflow-hidden">
+          {/* Effet de fond spatial */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black via-purple-900/50 to-black animate-pulse"></div>
+          
+          {/* Étoiles qui défilent */}
+          {[...Array(50)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-1 h-1 bg-white rounded-full animate-ping"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 2}s`,
+                animationDuration: `${1 + Math.random() * 2}s`
+              }}
+            />
+          ))}
+          
+          {/* La méga fusée */}
+          <div className="absolute left-1/2 transform -translate-x-1/2 bottom-0 animate-rocket-launch">
+            <div className="relative">
+              {/* Corps de la fusée */}
+              <div className="w-16 h-32 bg-gradient-to-t from-gray-300 via-white to-gray-300 rounded-t-full mx-auto relative">
+                {/* Fenêtre */}
+                <div className="absolute top-4 left-1/2 transform -translate-x-1/2 w-6 h-6 bg-blue-400 rounded-full border-2 border-gray-400"></div>
+                {/* Détails */}
+                <div className="absolute top-12 left-1/2 transform -translate-x-1/2 w-8 h-2 bg-red-500 rounded"></div>
+                <div className="absolute top-16 left-1/2 transform -translate-x-1/2 w-8 h-2 bg-blue-500 rounded"></div>
+              </div>
+              
+              {/* Ailerons */}
+              <div className="absolute -bottom-2 left-2 w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-t-12 border-t-red-500"></div>
+              <div className="absolute -bottom-2 right-2 w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-t-12 border-t-red-500"></div>
+              
+              {/* Flammes de propulsion */}
+              <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 w-12 h-16 animate-flame">
+                <div className="w-full h-full bg-gradient-to-b from-orange-400 via-red-500 to-yellow-300 rounded-b-full opacity-90 animate-pulse"></div>
+                <div className="absolute inset-2 bg-gradient-to-b from-yellow-300 via-orange-400 to-red-500 rounded-b-full animate-bounce"></div>
+              </div>
+              
+              {/* Particules d'échappement */}
+              {[...Array(20)].map((_, i) => (
+                <div
+                  key={i}
+                  className="absolute w-2 h-2 bg-orange-400 rounded-full animate-particle"
+                  style={{
+                    left: `${6 + Math.random() * 4}px`,
+                    bottom: `-${20 + i * 3}px`,
+                    animationDelay: `${Math.random() * 1}s`,
+                    animationDuration: `${0.5 + Math.random() * 0.5}s`
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+          
+          {/* Texte d'animation */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-center animate-bounce">
+              <h2 className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-red-500 to-pink-500 mb-4 animate-pulse">
+                🚀 TO THE MOON! 🚀
+              </h2>
+              <p className="text-3xl font-bold text-white animate-bounce delay-500">
+                {formData.name} ({formData.symbol}) IS LAUNCHING!
+              </p>
+            </div>
+          </div>
+          
+          {/* Explosion de confettis */}
+          {[...Array(30)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-3 h-3 animate-confetti"
+              style={{
+                left: `${40 + Math.random() * 20}%`,
+                top: `${40 + Math.random() * 20}%`,
+                backgroundColor: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD'][Math.floor(Math.random() * 6)],
+                animationDelay: `${Math.random() * 2}s`,
+                animationDuration: `${2 + Math.random() * 2}s`
+              }}
+            />
+          ))}
+        </div>
+      )}
+
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-72 h-72 bg-avalanche-red/10 rounded-full blur-3xl animate-pulse"></div>

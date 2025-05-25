@@ -25,6 +25,18 @@ const Home: React.FC<HomeProps> = ({ isWalletConnected }) => {
 
   const tokenService = TokenService.getInstance();
 
+  // Fonction pour formater les nombres avec des espaces comme séparateurs
+  const formatNumberWithPowers = (value: string | number): string => {
+    const num = Number(value);
+    if (isNaN(num) || num === 0) return '0';
+    
+    // Divise par 1×10^18 pour réduire la magnitude
+    const adjustedNum = num / Math.pow(10, 18);
+    
+    // Affichage avec espaces comme séparateurs (format français)
+    return Math.round(adjustedNum).toLocaleString('fr-FR').replace(/,/g, ' ').replace(/\u00A0/g, ' ');
+  };
+
   useEffect(() => {
     loadTokens();
   }, []);
@@ -174,7 +186,7 @@ const Home: React.FC<HomeProps> = ({ isWalletConnected }) => {
             <Button 
               variant="outline" 
               size="lg"
-              className="pump-button-outline border-2 border-white text-white hover:bg-white hover:text-black font-bold text-lg px-8 py-4 rounded-2xl transform hover:scale-105 transition-all duration-300"
+              className="pump-button-outline border-2 border-white text-black hover:bg-white hover:text-black font-bold text-lg px-8 py-4 rounded-2xl transform hover:scale-105 transition-all duration-300"
             >
               <Star className="mr-2 h-6 w-6" />
               EXPLORE TOKENS
@@ -198,7 +210,7 @@ const Home: React.FC<HomeProps> = ({ isWalletConnected }) => {
             <div className="flex items-center justify-between mb-4">
               <TrendingUp className="w-10 h-10 text-avalanche-red glow-icon" />
               <div className="text-right">
-                <p className="text-4xl font-black text-white glow-text">{tokens.length}</p>
+                <p className="text-4xl font-black text-white glow-text">{tokens.length || 0}</p>
                 <p className="text-gray-400 font-bold tracking-wide">ACTIVE TOKENS</p>
               </div>
             </div>
@@ -209,12 +221,10 @@ const Home: React.FC<HomeProps> = ({ isWalletConnected }) => {
           
           <div className="pump-card bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-xl rounded-3xl p-8 border border-gray-700/50 transform hover:scale-105 transition-all duration-300">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full flex items-center justify-center glow-icon">
-                <span className="text-white font-black text-xl">$</span>
-              </div>
+
               <div className="text-right">
                 <p className="text-4xl font-black text-white glow-text">
-                  {tokens.reduce((sum, token) => sum + token.marketCap, 0).toLocaleString()}
+                  {formatNumberWithPowers(tokens.reduce((sum, token) => sum + (token.marketCap || 0), 0))}
                 </p>
                 <p className="text-gray-400 font-bold tracking-wide">TOTAL VOLUME</p>
               </div>
@@ -250,65 +260,80 @@ const Home: React.FC<HomeProps> = ({ isWalletConnected }) => {
               className="pump-input pl-12 bg-gray-800/50 border-gray-600 text-white placeholder-gray-400 rounded-2xl h-14 text-lg font-medium backdrop-blur-xl"
             />
           </div>
-          <Button
+            <Button
             onClick={refreshTokens}
             disabled={isRefreshing}
             className="pump-button bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-cyan-500 hover:to-blue-500 text-white font-bold px-6 py-3 rounded-2xl"
-          >
+            >
             <RefreshCw className={`w-5 h-5 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
             REFRESH
-          </Button>
-        </div>
+            </Button>
+          </div>
 
-        {/* Loading State */}
-        {isLoading ? (
-          <div className="flex items-center justify-center py-20">
+          {/* Loading State */}
+          {isLoading ? (
+            <div className="flex items-center justify-center py-20">
             <div className="text-center">
               <Loader2 className="w-12 h-12 animate-spin text-avalanche-red mx-auto mb-4 glow-icon" />
               <span className="text-2xl font-bold text-white glow-text">Loading tokens...</span>
             </div>
-          </div>
-        ) : (
-          <>
+            </div>
+          ) : (
+            <>
             {/* Tokens Grid */}
             {filteredTokens.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                {filteredTokens.map((token, index) => (
-                  <div 
-                    key={token.address} 
-                    className="animate-fade-in"
-                    style={{ animationDelay: `${index * 100}ms` }}
-                  >
-                    <TokenCard
-                      token={token}
-                      onBuy={handleBuyToken}
-                      isWalletConnected={isWalletConnected}
-                    />
-                  </div>
+              <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
+                {filteredTokens.slice(0, 9).map((token, index) => (
+                <div 
+                  key={token.address} 
+                  className="animate-fade-in"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <TokenCard
+                  token={token}
+                  onBuy={handleBuyToken}
+                  isWalletConnected={isWalletConnected}
+                  />
+                </div>
                 ))}
               </div>
+              {filteredTokens.length > 9 && (
+                <div className="text-center mt-8">
+                <p className="text-gray-400 font-bold">
+                  Affichage de 9 tokens sur {filteredTokens.length} disponibles
+                </p>
+                <Button 
+                  variant="outline" 
+                  className="mt-4 pump-button-outline border-2 border-avalanche-red text-avalanche-red hover:bg-avalanche-red hover:text-white font-bold px-6 py-3 rounded-2xl"
+                >
+                  Voir plus de tokens
+                </Button>
+                </div>
+              )}
+              </>
             ) : (
               <div className="text-center py-20">
-                <div className="mb-8">
-                  <Rocket className="w-24 h-24 text-gray-600 mx-auto mb-6 animate-bounce" />
-                  <p className="text-3xl font-black text-white mb-4 glow-text">
-                    {searchQuery ? 'NO TOKENS FOUND' : 'CONNECT YOUR WALLET'}
-                  </p>
-                  <p className="text-xl text-gray-400 font-bold">
-                    Launch your token on AVALANCHE in just two clicks
-                  </p>
-                </div>
-                <Button 
-                  size="lg"
-                  className="pump-button bg-gradient-to-r from-avalanche-red to-red-600 hover:from-red-600 hover:to-avalanche-red text-white font-black text-xl px-12 py-6 rounded-2xl transform hover:scale-110 transition-all duration-300 shadow-2xl"
-                >
-                  <Flame className="mr-3 h-8 w-8" />
-                  CREATE YOUR TOKEN NOW
-                </Button>
+              <div className="mb-8">
+                <Rocket className="w-24 h-24 text-gray-600 mx-auto mb-6 animate-bounce" />
+                <p className="text-3xl font-black text-white mb-4 glow-text">
+                {searchQuery ? 'NO TOKENS FOUND' : 'CONNECT YOUR WALLET'}
+                </p>
+                <p className="text-xl text-gray-400 font-bold">
+                Launch your token on AVALANCHE in just two clicks
+                </p>
+              </div>
+              <Button 
+                size="lg"
+                className="pump-button bg-gradient-to-r from-avalanche-red to-red-600 hover:from-red-600 hover:to-avalanche-red text-white font-black text-xl px-12 py-6 rounded-2xl transform hover:scale-110 transition-all duration-300 shadow-2xl"
+              >
+                <Flame className="mr-3 h-8 w-8" />
+                CREATE YOUR TOKEN NOW
+              </Button>
               </div>
             )}
-          </>
-        )}
+            </>
+          )}
 
         {/* Buy Modal */}
         <BuyTokenModal

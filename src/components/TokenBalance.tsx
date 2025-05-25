@@ -56,19 +56,26 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
   const formatBalance = (balance: string) => {
     const num = parseFloat(balance);
     if (num === 0) return '0';
-    if (num < 0.0001) return '< 0.0001';
-    if (num < 1) return num.toFixed(6);
-    if (num < 1000) return num.toFixed(4);
-    if (num < 1000000) return (num / 1000).toFixed(2) + 'K';
-    return (num / 1000000).toFixed(2) + 'M';
+    
+    // Divise par 1×10^18 pour réduire la magnitude
+    const adjustedNum = num / Math.pow(10, 18);
+    
+    if (adjustedNum < 0.0001) return '< 0.0001';
+    if (adjustedNum < 1) return adjustedNum.toFixed(6);
+    
+    // Affichage avec espaces comme séparateurs (format français) sans virgules
+    return Math.round(adjustedNum).toLocaleString('fr-FR').replace(/,/g, ' ').replace(/\u00A0/g, ' ');
   };
 
   const formatSupply = (supply: string) => {
     const num = parseFloat(supply);
-    if (num < 1000) return num.toFixed(0);
-    if (num < 1000000) return (num / 1000).toFixed(1) + 'K';
-    if (num < 1000000000) return (num / 1000000).toFixed(1) + 'M';
-    return (num / 1000000000).toFixed(1) + 'B';
+    if (num === 0) return '0';
+    
+    // Divise par 1×10^18 pour réduire la magnitude
+    const adjustedNum = num / Math.pow(10, 18);
+    
+    // Affichage avec espaces comme séparateurs (format français) sans virgules
+    return Math.round(adjustedNum).toLocaleString('fr-FR').replace(/,/g, ' ').replace(/\u00A0/g, ' ');
   };
 
   const tokensWithBalance = tokens.filter(token => 

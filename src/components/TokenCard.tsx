@@ -25,12 +25,12 @@ const TokenCard: React.FC<TokenCardProps> = ({
 
   const formatMarketCap = (marketCap?: number) => {
     if (!marketCap) return "N/A";
-    if (marketCap >= 1000000) {
-      return `${(marketCap / 1000000).toFixed(1)}M AVAX`;
-    } else if (marketCap >= 1000) {
-      return `${(marketCap / 1000).toFixed(1)}K AVAX`;
-    }
-    return `${marketCap.toFixed(2)} AVAX`;
+    
+    // Divise par 1×10^18 pour réduire la magnitude
+    const adjustedMarketCap = marketCap / Math.pow(10, 18);
+    
+    // Affichage avec espaces comme séparateurs (format français)
+    return `${Math.round(adjustedMarketCap).toLocaleString('fr-FR').replace(/,/g, ' ').replace(/\u00A0/g, ' ')} AVAX`;
   };
 
   const formatAddress = (address: string) => {
@@ -39,12 +39,13 @@ const TokenCard: React.FC<TokenCardProps> = ({
 
   const formatSupply = (supply: string, decimals: number) => {
     const num = parseFloat(supply);
-    if (num >= 1000000) {
-      return `${(num / 1000000).toFixed(1)}M`;
-    } else if (num >= 1000) {
-      return `${(num / 1000).toFixed(1)}K`;
-    }
-    return num.toLocaleString();
+    if (isNaN(num) || num === 0) return '0';
+    
+    // Divise par 1×10^18 pour réduire la magnitude
+    const adjustedNum = num / Math.pow(10, 18);
+    
+    // Affichage avec espaces comme séparateurs (format français)
+    return Math.round(adjustedNum).toLocaleString('fr-FR').replace(/,/g, ' ').replace(/\u00A0/g, ' ');
   };
 
   const copyAddress = async () => {
@@ -64,8 +65,8 @@ const TokenCard: React.FC<TokenCardProps> = ({
   };
 
   const getPumpLevel = () => {
-    const pump = Math.floor(Math.random() * 5) + 1;
-    return '🚀'.repeat(pump);
+    const pump = 0;
+    return '⭐'.repeat(pump);
   };
 
   return (
@@ -145,7 +146,7 @@ const TokenCard: React.FC<TokenCardProps> = ({
               🏦 YOUR BAG
             </p>
             <p className="font-black text-lg text-cyan-400">
-              {token.userBalance ? `${parseFloat(token.userBalance).toFixed(2)}` : '0'}
+              {token.userBalance ? `${(parseFloat(token.userBalance) / Math.pow(10, 18)).toFixed(2).replace(/,/g, ' ').replace(/\u00A0/g, ' ')}` : '0'}
             </p>
           </div>
         </div>
@@ -180,7 +181,7 @@ const TokenCard: React.FC<TokenCardProps> = ({
           {isWalletConnected ? (
             <>
               <Flame className="w-5 h-5 mr-2 animate-pulse" />
-              PUMP IT! 🚀
+              PUMP IT! ⚡
             </>
           ) : (
             <>
