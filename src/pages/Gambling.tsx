@@ -242,7 +242,7 @@ const Gambling: React.FC = () => {
                       <Coins className="w-10 h-10 text-avalanche-red glow-icon" />
                       <div className="text-right">
                         <p className="text-4xl font-black text-white glow-text">{myTokens.length}</p>
-                        <p className="text-gray-400 font-bold tracking-wide">MY TOKENS</p>
+                        <p className="text-gray-400 font-bold tracking-wide">MES TOKENS</p>
                       </div>
                     </div>
                     <div className="w-full bg-gray-700 rounded-full h-2">
