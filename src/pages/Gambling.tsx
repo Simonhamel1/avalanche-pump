@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Dice1, Coins, TrendingUp, Wallet, Loader2, Trophy, AlertTriangle, Rocket, Flame, Star } from 'lucide-react';
+import { Dice1, Coins, TrendingUp, Wallet, Loader2, Trophy, AlertTriangle, Rocket, Flame, Star, Check, X } from 'lucide-react';
 import { Token, TokenService } from '@/services/tokenService';
 import { walletService } from '@/services/walletService';
 import DiceGame from '@/components/DiceGame';
@@ -11,7 +11,9 @@ import { useToast } from '@/hooks/use-toast';
 
 const Gambling: React.FC = () => {
   const [myTokens, setMyTokens] = useState<Token[]>([]);
+  const [gamblingCompatibility, setGamblingCompatibility] = useState<Map<string, boolean>>(new Map());
   const [isLoading, setIsLoading] = useState(true);
+  const [isCheckingCompatibility, setIsCheckingCompatibility] = useState(false);
   const [selectedToken, setSelectedToken] = useState<Token | null>(null);
   const [isWalletConnected, setIsWalletConnected] = useState(false);
   const { toast } = useToast();
@@ -30,11 +32,40 @@ const Gambling: React.FC = () => {
     setIsWalletConnected(connection.isConnected);
   };
 
+  const checkIfTokenSupportsGambling = async (token: Token): Promise<boolean> => {
+    try {
+      // Vérifier si le token a été créé par notre factory
+      const isFactoryToken = await tokenService.isFactoryToken(token.address);
+      return isFactoryToken;
+    } catch (error) {
+      console.error('Erreur lors de la vérification du gambling:', error);
+      return false;
+    }
+  };
+
   const loadMyTokens = async () => {
     try {
       setIsLoading(true);
       const tokens = await tokenService.getMyTokens();
       setMyTokens(tokens);
+      
+      // Vérifier la compatibilité gambling pour chaque token
+      setIsCheckingCompatibility(true);
+      const compatibilityMap = new Map<string, boolean>();
+      
+      await Promise.all(tokens.map(async (token) => {
+        try {
+          const isCompatible = await checkIfTokenSupportsGambling(token);
+          compatibilityMap.set(token.address, isCompatible);
+        } catch (error) {
+          console.error(`Erreur vérification gambling pour ${token.address}:`, error);
+          compatibilityMap.set(token.address, false);
+        }
+      }));
+      
+      setGamblingCompatibility(compatibilityMap);
+      setIsCheckingCompatibility(false);
+      
       console.log(`${tokens.length} tokens loaded for gambling`);
     } catch (error) {
       console.error('Error loading user tokens:', error);
@@ -46,6 +77,7 @@ const Gambling: React.FC = () => {
       setMyTokens([]);
     } finally {
       setIsLoading(false);
+      setIsCheckingCompatibility(false);
     }
   };
 
@@ -67,7 +99,34 @@ const Gambling: React.FC = () => {
     }
   };
 
-  const handleSelectToken = (token: Token) => {
+  const handleSelectToken = async (token: Token) => {
+    // Vérifier si le token supporte le gambling depuis le cache
+    const supportsGambling = gamblingCompatibility.get(token.address);
+    
+    if (supportsGambling === false) {
+      toast({
+        title: "Token non compatible",
+        description: "Ce token ne supporte pas le gambling. Seuls les tokens créés via notre factory peuvent être utilisés pour jouer.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Si on n'a pas encore vérifié, vérifier maintenant
+    if (supportsGambling === undefined) {
+      const isCompatible = await checkIfTokenSupportsGambling(token);
+      setGamblingCompatibility(prev => new Map(prev).set(token.address, isCompatible));
+      
+      if (!isCompatible) {
+        toast({
+          title: "Token non compatible",
+          description: "Ce token ne supporte pas le gambling. Seuls les tokens créés via notre factory peuvent être utilisés pour jouer.",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+    
     setSelectedToken(token);
   };
 
@@ -103,14 +162,20 @@ const Gambling: React.FC = () => {
             GAMBLING
             <br />
             <span className="text-avalanche-red glow-text">ARENA</span>
-          </h1>
-          <div className="flex items-center justify-center space-x-4 mb-6">
-            <Dice1 className="w-8 h-8 text-avalanche-red animate-bounce" />
-            <p className="text-xl md:text-2xl text-gray-300 font-bold tracking-wide">
-              LANCEZ LE DÉ & GAGNEZ GROS
-            </p>
-            <Dice1 className="w-8 h-8 text-avalanche-red animate-bounce delay-500" />
-          </div>
+          </h1>                  <div className="flex items-center space-x-4 mb-6">
+                    <Dice1 className="w-8 h-8 text-avalanche-red animate-bounce" />
+                    <div className="text-center flex-1">
+                      <p className="text-xl md:text-2xl text-gray-300 font-bold tracking-wide">
+                        LANCEZ LE DÉ & GAGNEZ GROS
+                      </p>
+                      {isCheckingCompatibility && (
+                        <p className="text-sm text-gray-500 mt-1 animate-pulse">
+                          Vérification de la compatibilité...
+                        </p>
+                      )}
+                    </div>
+                    <Dice1 className="w-8 h-8 text-avalanche-red animate-bounce delay-500" />
+                  </div>
           <p className="text-lg text-gray-400 max-w-3xl mx-auto leading-relaxed">
             Utilisez vos tokens pour jouer au dé et multiplier vos gains. 
             Chaque lancer est vérifié par Chainlink VRF pour un jeu équitable et transparent.
@@ -227,62 +292,134 @@ const Gambling: React.FC = () => {
                       <>
                         <div className="mb-8">
                           <h2 className="text-3xl font-black text-white mb-4 text-center glow-text">
-                            🎲 VOS TOKENS ÉLIGIBLES AU JEU DE DÉ
+                            🎲 VOS TOKENS POUR LE JEU DE DÉ
                           </h2>
-                          <p className="text-center text-gray-400 font-bold">
-                            Sélectionnez un token pour commencer à jouer
-                          </p>
+                          <div className="text-center space-y-2">
+                            <p className="text-gray-400 font-bold">
+                              Sélectionnez un token compatible pour commencer à jouer
+                            </p>
+                            <div className="flex items-center justify-center space-x-6 text-sm">
+                              <div className="flex items-center space-x-2">
+                                <Check className="w-4 h-4 text-green-400" />
+                                <span className="text-green-400">Compatible Gambling</span>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <X className="w-4 h-4 text-red-400" />
+                                <span className="text-red-400">Non Compatible</span>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
-                          {myTokens.map((token, index) => (
-                            <div 
-                              key={token.address} 
-                              className="animate-fade-in"
-                              style={{ animationDelay: `${index * 100}ms` }}
-                            >
-                              <Card className="pump-card bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-xl border-gray-700/50 hover:border-avalanche-red/50 transform hover:scale-105 transition-all duration-300 overflow-hidden">
-                                <CardHeader className="pb-4">
-                                  <div className="flex items-start justify-between">
-                                    <div className="flex items-center space-x-3">
-                                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-avalanche-red to-red-600 flex items-center justify-center font-black text-white text-lg">
-                                        {token.symbol.charAt(0)}
+                          {myTokens.map((token, index) => {
+                            const isGamblingCompatible = gamblingCompatibility.get(token.address);
+                            const isCheckingThisToken = isCheckingCompatibility && isGamblingCompatible === undefined;
+                            
+                            return (
+                              <div 
+                                key={token.address} 
+                                className="animate-fade-in"
+                                style={{ animationDelay: `${index * 100}ms` }}
+                              >
+                                <Card className={`pump-card bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-xl border-gray-700/50 transform hover:scale-105 transition-all duration-300 overflow-hidden ${
+                                  isGamblingCompatible === true 
+                                    ? 'hover:border-avalanche-red/50' 
+                                    : isGamblingCompatible === false 
+                                      ? 'border-red-500/30' 
+                                      : 'border-gray-700/50'
+                                }`}>
+                                  <CardHeader className="pb-4">
+                                    <div className="flex items-start justify-between">
+                                      <div className="flex items-center space-x-3">
+                                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-avalanche-red to-red-600 flex items-center justify-center font-black text-white text-lg">
+                                          {token.symbol.charAt(0)}
+                                        </div>
+                                        <div>
+                                          <CardTitle className="text-lg font-black text-white glow-text">
+                                            {token.name}
+                                          </CardTitle>
+                                          <div className="flex items-center space-x-2">
+                                            <Badge variant="outline" className="text-xs border-avalanche-red text-avalanche-red">
+                                              {token.symbol}
+                                            </Badge>
+                                            {isCheckingThisToken ? (
+                                              <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
+                                            ) : isGamblingCompatible === true ? (
+                                              <Badge className="text-xs bg-green-500/20 text-green-400 border-green-500/50">
+                                                <Check className="w-3 h-3 mr-1" />
+                                                GAMBLING
+                                              </Badge>
+                                            ) : isGamblingCompatible === false ? (
+                                              <Badge className="text-xs bg-red-500/20 text-red-400 border-red-500/50">
+                                                <X className="w-3 h-3 mr-1" />
+                                                NON COMPATIBLE
+                                              </Badge>
+                                            ) : null}
+                                          </div>
+                                        </div>
                                       </div>
-                                      <div>
-                                        <CardTitle className="text-lg font-black text-white glow-text">
-                                          {token.name}
-                                        </CardTitle>
-                                        <Badge variant="outline" className="text-xs border-avalanche-red text-avalanche-red">
-                                          {token.symbol}
-                                        </Badge>
-                                      </div>
+                                      {isGamblingCompatible === true ? (
+                                        <Dice1 className="w-6 h-6 text-avalanche-red animate-pulse" />
+                                      ) : (
+                                        <div className="w-6 h-6 rounded-full bg-gray-600 flex items-center justify-center">
+                                          <X className="w-4 h-4 text-gray-400" />
+                                        </div>
+                                      )}
                                     </div>
-                                    <Dice1 className="w-6 h-6 text-avalanche-red animate-pulse" />
-                                  </div>
-                                </CardHeader>
-                                
-                                <CardContent className="space-y-4">
-                                  <div className="space-y-2">
-                                    <div className="flex justify-between items-center">
-                                      <span className="text-sm text-gray-400 font-medium">Balance:</span>
-                                      <span className="text-lg font-black text-white">
-                                        {formatBalance(token.userBalance)} {token.symbol}
-                                      </span>
-                                    </div>
-                                  </div>
+                                  </CardHeader>
                                   
-                                  <Button
-                                    onClick={() => handleSelectToken(token)}
-                                    disabled={!token.userBalance || parseFloat(token.userBalance) === 0}
-                                    className="w-full pump-button bg-gradient-to-r from-avalanche-red to-red-600 hover:from-red-600 hover:to-avalanche-red text-white font-black py-3 rounded-2xl transform hover:scale-105 transition-all duration-300"
-                                  >
-                                    <Flame className="mr-2 h-5 w-5" />
-                                    JOUER AU DÉ
-                                  </Button>
-                                </CardContent>
-                              </Card>
-                            </div>
-                          ))}
+                                  <CardContent className="space-y-4">
+                                    <div className="space-y-2">
+                                      <div className="flex justify-between items-center">
+                                        <span className="text-sm text-gray-400 font-medium">Balance:</span>
+                                        <span className="text-lg font-black text-white">
+                                          {formatBalance(token.userBalance)} {token.symbol}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    
+                                    <Button
+                                      onClick={() => handleSelectToken(token)}
+                                      disabled={
+                                        !token.userBalance || 
+                                        parseFloat(token.userBalance) === 0 || 
+                                        isGamblingCompatible === false ||
+                                        isCheckingThisToken
+                                      }
+                                      className={`w-full font-black py-3 rounded-2xl transform hover:scale-105 transition-all duration-300 ${
+                                        isGamblingCompatible === true
+                                          ? 'pump-button bg-gradient-to-r from-avalanche-red to-red-600 hover:from-red-600 hover:to-avalanche-red text-white'
+                                          : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                                      }`}
+                                    >
+                                      {isCheckingThisToken ? (
+                                        <>
+                                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                                          VÉRIFICATION...
+                                        </>
+                                      ) : isGamblingCompatible === true ? (
+                                        <>
+                                          <Flame className="mr-2 h-5 w-5" />
+                                          JOUER AU DÉ
+                                        </>
+                                      ) : isGamblingCompatible === false ? (
+                                        <>
+                                          <X className="mr-2 h-5 w-5" />
+                                          NON COMPATIBLE
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                                          CHARGEMENT...
+                                        </>
+                                      )}
+                                    </Button>
+                                  </CardContent>
+                                </Card>
+                              </div>
+                            );
+                          })}
                         </div>
                       </>
                     ) : (

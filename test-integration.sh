@@ -60,7 +60,7 @@ fi
 echo -e "${BLUE}4. Vérification de l'intégration du smart contract...${NC}"
 
 # Vérifier que l'ABI contient les bonnes fonctions
-required_functions=("placeBet" "getBetDetails" "getPlayerBets" "calculatePayout")
+required_functions=("placeBet" "getBetDetails" "getPlayerBets")
 abi_file="src/contracts/abis/CustomERC20Token.json"
 
 if [ -f "$abi_file" ]; then

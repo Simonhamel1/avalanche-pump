@@ -72,6 +72,13 @@ export class DiceGameService {
   }
 
   /**
+   * Crée une instance du service pour un token spécifique
+   */
+  static createForToken(tokenAddress: string): DiceGameService {
+    return new DiceGameService(tokenAddress);
+  }
+
+  /**
    * Vérifie si le service est initialisé
    */
   private ensureInitialized(): void {
@@ -449,4 +456,12 @@ export const getDiceGameService = (): DiceGameService => {
     }
   }
   return diceGameServiceInstance;
+};
+
+/**
+ * Crée une instance du service pour un token spécifique
+ * Utilisé pour les tokens déployés via la factory
+ */
+export const createDiceGameServiceForToken = (tokenAddress: string): DiceGameService => {
+  return new DiceGameService(tokenAddress);
 };

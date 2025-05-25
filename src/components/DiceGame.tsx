@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Dice1, Dice2, Dice3, Dice4, Dice5, Dice6, Coins, Trophy, Flame, Loader2 } from 'lucide-react';
 import { Token } from '@/services/tokenService';
-import { getDiceGameService, BetResult, GameStats } from '@/services/diceGameService';
+import { createDiceGameServiceForToken, BetResult, GameStats, DiceGameService } from '@/services/diceGameService';
 import { useToast } from '@/hooks/use-toast';
 
 interface DiceGameProps {
@@ -24,26 +24,37 @@ const DiceGame: React.FC<DiceGameProps> = ({ token, onBetPlaced }) => {
   const [gameStats, setGameStats] = useState<GameStats | null>(null);
   const [playerBalance, setPlayerBalance] = useState<string>('0');
   const [currentRequestId, setCurrentRequestId] = useState<string | null>(null);
+  const [diceGameService, setDiceGameService] = useState<DiceGameService | null>(null);
   const { toast } = useToast();
 
-  const diceGameService = getDiceGameService();
-
   useEffect(() => {
-    initializeGame();
-  }, []);
+    // Créer une instance du service pour ce token spécifique
+    const service = createDiceGameServiceForToken(token.address);
+    setDiceGameService(service);
+    
+    // Initialiser le jeu avec le nouveau service
+    initializeGameWithService(service);
+
+    return () => {
+      // Cleanup lors du changement de token ou démontage
+      service.cleanup();
+    };
+  }, [token.address]);
 
   useEffect(() => {
     return () => {
       // Cleanup lors du démontage du composant
-      diceGameService.cleanup();
+      if (diceGameService) {
+        diceGameService.cleanup();
+      }
     };
-  }, []);
+  }, [diceGameService]);
 
-  const initializeGame = async () => {
+  const initializeGameWithService = async (service: DiceGameService) => {
     try {
-      await diceGameService.initialize();
-      await loadGameData();
-      setupEventListeners();
+      await service.initialize();
+      await loadGameDataWithService(service);
+      setupEventListenersWithService(service);
     } catch (error) {
       console.error('Erreur lors de l\'initialisation du jeu:', error);
       toast({
@@ -54,12 +65,12 @@ const DiceGame: React.FC<DiceGameProps> = ({ token, onBetPlaced }) => {
     }
   };
 
-  const loadGameData = async () => {
+  const loadGameDataWithService = async (service: DiceGameService) => {
     try {
       const [stats, balance, history] = await Promise.all([
-        diceGameService.getGameStats(),
-        diceGameService.getPlayerBalance(),
-        diceGameService.getPlayerBetsWithDetails()
+        service.getGameStats(),
+        service.getPlayerBalance(),
+        service.getPlayerBetsWithDetails()
       ]);
       
       setGameStats(stats);
@@ -70,19 +81,19 @@ const DiceGame: React.FC<DiceGameProps> = ({ token, onBetPlaced }) => {
     }
   };
 
-  const setupEventListeners = () => {
-    diceGameService.subscribeToEvents({
+  const setupEventListenersWithService = (service: DiceGameService) => {
+    service.subscribeToEvents({
       onBetPlaced: (player, requestId, betAmount) => {
         console.log('Pari placé:', { player, requestId, betAmount });
         setCurrentRequestId(requestId);
       },
       onBetResult: (player, requestId, randomNumber, payout, won) => {
-        handleBetResult({ requestId, randomNumber, payout, won });
+        handleBetResult({ requestId, randomNumber, payout, won, service });
       },
     });
   };
 
-  const handleBetResult = (result: { requestId: string; randomNumber: string; payout: string; won: boolean }) => {
+  const handleBetResult = (result: { requestId: string; randomNumber: string; payout: string; won: boolean; service: DiceGameService }) => {
     const randomNum = parseInt(result.randomNumber);
     const diceValue = (randomNum % 6) + 1;
     setDiceResult(diceValue);
@@ -107,12 +118,12 @@ const DiceGame: React.FC<DiceGameProps> = ({ token, onBetPlaced }) => {
       variant: won ? "default" : "destructive"
     });
     
-    loadGameData();
+    loadGameDataWithService(result.service);
     onBetPlaced?.();
   };
 
   const placeBet = async () => {
-    if (!betAmount || !gameStats) return;
+    if (!betAmount || !gameStats || !diceGameService) return;
     
     const betValue = parseFloat(betAmount);
     const minBet = parseFloat(gameStats.minimumBet);
