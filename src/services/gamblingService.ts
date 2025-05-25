@@ -18,6 +18,7 @@ export interface BetHistory {
     randomNumber: string;
     payout: string;
     won: boolean;
+    diceValue: number;
   };
   timestamp: Date;
   status: 'pending' | 'completed';
@@ -73,7 +74,7 @@ export class GamblingService {
    */
   async placeBet(tokenAddress: string, betAmount: string): Promise<string> {
     try {
-      console.log('Placing bet:', betAmount, 'on token:', tokenAddress);
+      console.log('Placing dice bet:', betAmount, 'on token:', tokenAddress);
       
       const betEvent = await contractService.placeBet(tokenAddress, betAmount, false);
       
@@ -111,15 +112,19 @@ export class GamblingService {
           const historyItem: BetHistory = {
             requestId: id,
             betAmount: betDetails.betAmount,
-            timestamp: new Date(), // Dans un vrai projet, il faudrait récupérer le timestamp du block
+            timestamp: new Date(),
             status: betDetails.fulfilled ? 'completed' : 'pending'
           };
 
           if (betDetails.fulfilled) {
+            const randomNum = parseInt(betDetails.randomNumber);
+            const diceValue = (randomNum % 6) + 1; // Convertir en valeur de dé (1-6)
+            
             historyItem.result = {
               randomNumber: betDetails.randomNumber,
               payout: betDetails.payout,
-              won: parseFloat(betDetails.payout) > parseFloat(betDetails.betAmount)
+              won: parseFloat(betDetails.payout) > parseFloat(betDetails.betAmount),
+              diceValue
             };
           }
 
@@ -143,10 +148,15 @@ export class GamblingService {
       if (this.activeBets.has(event.requestId)) {
         const bet = this.activeBets.get(event.requestId)!;
         bet.status = 'completed';
+        
+        const randomNum = parseInt(event.randomNumber);
+        const diceValue = (randomNum % 6) + 1;
+        
         bet.result = {
           randomNumber: event.randomNumber,
           payout: event.payout,
-          won: event.won
+          won: event.won,
+          diceValue
         };
       }
 
@@ -155,16 +165,38 @@ export class GamblingService {
   }
 
   /**
-   * Calcule les odds/multiplicateurs pour affichage
+   * Calcule les multiplicateurs pour le jeu de dés
    */
-  calculateOdds(): { range: string; multiplier: string; probability: string }[] {
+  calculateDiceOdds(): { dice: number; multiplier: string; probability: string }[] {
     return [
-      { range: '0-4999', multiplier: '0x', probability: '50%' },
-      { range: '5000-7999', multiplier: '1.5x', probability: '30%' },
-      { range: '8000-9499', multiplier: '3x', probability: '15%' },
-      { range: '9500-9899', multiplier: '10x', probability: '4%' },
-      { range: '9900-9999', multiplier: '50x', probability: '1%' }
+      { dice: 1, multiplier: '0x', probability: '16.7%' },
+      { dice: 2, multiplier: '0x', probability: '16.7%' },
+      { dice: 3, multiplier: '1.5x', probability: '16.7%' },
+      { dice: 4, multiplier: '2x', probability: '16.7%' },
+      { dice: 5, multiplier: '5x', probability: '16.7%' },
+      { dice: 6, multiplier: '10x', probability: '16.7%' }
     ];
+  }
+
+  /**
+   * Détermine le gain basé sur le résultat du dé
+   */
+  calculateDicePayout(betAmount: number, diceValue: number): number {
+    switch (diceValue) {
+      case 1:
+      case 2:
+        return 0; // Perte
+      case 3:
+        return betAmount * 1.5;
+      case 4:
+        return betAmount * 2;
+      case 5:
+        return betAmount * 5;
+      case 6:
+        return betAmount * 10;
+      default:
+        return 0;
+    }
   }
 
   /**

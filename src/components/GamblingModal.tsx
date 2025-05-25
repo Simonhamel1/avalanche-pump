@@ -1,271 +1,197 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Dice1, Coins, TrendingUp, History, Loader2, Trophy, AlertTriangle } from 'lucide-react';
-import { GamblingService, GamblingGame, BetHistory } from '@/services/gamblingService';
-import { BetResultEvent } from '@/services/contractService';
+import { Dice1, Dice2, Dice3, Dice4, Dice5, Dice6, Coins, Trophy, Flame, Loader2 } from 'lucide-react';
+import { Token } from '@/services/tokenService';
+import { GamblingService } from '@/services/gamblingService';
 import { useToast } from '@/hooks/use-toast';
 
 interface GamblingModalProps {
   isOpen: boolean;
   onClose: () => void;
-  tokenAddress: string;
-  tokenName: string;
-  tokenSymbol: string;
+  token: Token;
   onBetPlaced?: () => void;
 }
 
-const GamblingModal: React.FC<GamblingModalProps> = ({
-  isOpen,
-  onClose,
-  tokenAddress,
-  tokenName,
-  tokenSymbol,
-  onBetPlaced
-}) => {
-  const [game, setGame] = useState<GamblingGame | null>(null);
+const GamblingModal: React.FC<GamblingModalProps> = ({ isOpen, onClose, token, onBetPlaced }) => {
   const [betAmount, setBetAmount] = useState('');
-  const [isPlacingBet, setIsPlacingBet] = useState(false);
-  const [betHistory, setBetHistory] = useState<BetHistory[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isRolling, setIsRolling] = useState(false);
+  const [diceResult, setDiceResult] = useState<number | null>(null);
+  const [lastWin, setLastWin] = useState<{ amount: string; multiplier: string } | null>(null);
+  const [animatingDice, setAnimatingDice] = useState(false);
   const { toast } = useToast();
-  
+
   const gamblingService = GamblingService.getInstance();
 
-  useEffect(() => {
-    if (isOpen && tokenAddress) {
-      initializeGame();
-    }
-  }, [isOpen, tokenAddress]);
-
-  const initializeGame = async () => {
+  const placeBet = async () => {
+    if (!betAmount) return;
+    
     try {
-      setIsLoading(true);
-      const gameData = await gamblingService.initializeGame(tokenAddress);
-      setGame(gameData);
+      setIsRolling(true);
+      setAnimatingDice(true);
+      setDiceResult(null);
+      setLastWin(null);
       
-      const history = await gamblingService.getBetHistory(tokenAddress);
-      setBetHistory(history);
+      const requestId = await gamblingService.placeBet(token.address, betAmount);
       
-      // S'abonner aux résultats en temps réel
-      await gamblingService.subscribeToResults(tokenAddress, handleBetResult);
-    } catch (error) {
-      console.error('Erreur lors de l\'initialisation:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible d'initialiser le jeu",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleBetResult = (result: BetResultEvent) => {
-    const won = result.won;
-    toast({
-      title: won ? "🎉 Vous avez gagné !" : "😔 Vous avez perdu",
-      description: `${won ? 'Gain' : 'Perte'}: ${result.payout} ${tokenSymbol}`,
-      variant: won ? "default" : "destructive"
-    });
-    
-    // Rafraîchir les données
-    initializeGame();
-    onBetPlaced?.();
-  };
-
-  const handlePlaceBet = async () => {
-    if (!game || !betAmount) return;
-    
-    const betValue = parseFloat(betAmount);
-    const minBet = parseFloat(game.minimumBet);
-    const userBalance = parseFloat(game.userBalance);
-    
-    if (betValue < minBet) {
-      toast({
-        title: "Pari invalide",
-        description: `Le pari minimum est de ${game.minimumBet} ${tokenSymbol}`,
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    if (betValue > userBalance) {
-      toast({
-        title: "Solde insuffisant",
-        description: `Vous n'avez que ${game.userBalance} ${tokenSymbol}`,
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      setIsPlacingBet(true);
-      const requestId = await gamblingService.placeBet(tokenAddress, betAmount);
-      
-      toast({
-        title: "Pari placé !",
-        description: `En attente du résultat... (ID: ${requestId.slice(0, 8)}...)`,
-      });
+      // Simuler un résultat aléatoire pour l'exemple
+      setTimeout(() => {
+        const randomResult = Math.floor(Math.random() * 6) + 1;
+        setDiceResult(randomResult);
+        setAnimatingDice(false);
+        setIsRolling(false);
+        
+        const payout = gamblingService.calculateDicePayout(parseFloat(betAmount), randomResult);
+        if (payout > 0) {
+          const multiplier = (payout / parseFloat(betAmount)).toFixed(1);
+          setLastWin({ amount: payout.toString(), multiplier: `${multiplier}x` });
+        }
+        
+        toast({
+          title: payout > 0 ? "🎉 Victoire !" : "😔 Défaite",
+          description: `Dé: ${randomResult} - ${payout > 0 ? `Gain: ${payout} ${token.symbol}` : 'Meilleure chance la prochaine fois !'}`,
+          variant: payout > 0 ? "default" : "destructive"
+        });
+        
+        onBetPlaced?.();
+      }, 2000);
       
       setBetAmount('');
-      initializeGame(); // Rafraîchir les données
     } catch (error) {
+      setIsRolling(false);
+      setAnimatingDice(false);
       console.error('Erreur lors du pari:', error);
       toast({
         title: "Erreur",
         description: error instanceof Error ? error.message : "Erreur lors du placement du pari",
         variant: "destructive"
       });
-    } finally {
-      setIsPlacingBet(false);
     }
   };
 
-  const odds = gamblingService.calculateOdds();
+  const getDiceIcon = (value: number | null, isAnimating: boolean) => {
+    if (isAnimating) {
+      const icons = [Dice1, Dice2, Dice3, Dice4, Dice5, Dice6];
+      const randomIcon = icons[Math.floor(Math.random() * icons.length)];
+      return React.createElement(randomIcon, { className: "w-16 h-16 text-avalanche-red animate-spin" });
+    }
+    
+    if (value === null) {
+      return <Dice1 className="w-16 h-16 text-gray-400" />;
+    }
+    
+    const diceIcons = [Dice1, Dice2, Dice3, Dice4, Dice5, Dice6];
+    const DiceIcon = diceIcons[value - 1];
+    return <DiceIcon className="w-16 h-16 text-avalanche-red animate-bounce" />;
+  };
 
-  if (isLoading) {
-    return (
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-4xl bg-gray-900 border-gray-700">
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-8 h-8 animate-spin text-avalanche-red" />
-            <span className="ml-2 text-white">Chargement du jeu...</span>
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
+  const getWinConditions = () => gamblingService.calculateDiceOdds();
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl bg-gray-900 border-gray-700 text-white">
+      <DialogContent className="sm:max-w-[600px] bg-gradient-to-br from-gray-800/95 to-gray-900/95 border-avalanche-red/30 text-white">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-avalanche-red to-red-400">
-            🎲 GAMBLING GAME - {tokenSymbol}
+          <DialogTitle className="text-2xl font-black text-center text-transparent bg-clip-text bg-gradient-to-r from-avalanche-red to-red-400">
+            🎲 JEU DE DÉ - {token.symbol}
           </DialogTitle>
         </DialogHeader>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Section de pari */}
-          <Card className="bg-gray-800 border-gray-700">
-            <CardHeader>
-              <CardTitle className="flex items-center text-avalanche-red">
-                <Dice1 className="mr-2 h-5 w-5" />
-                Place Your Bet
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Montant du pari ({tokenSymbol})
-                </label>
-                <Input
-                  type="number"
-                  value={betAmount}
-                  onChange={(e) => setBetAmount(e.target.value)}
-                  placeholder={`Min: ${game?.minimumBet || '0'}`}
-                  className="bg-gray-700 border-gray-600 text-white"
-                />
-                <p className="text-xs text-gray-400 mt-1">
-                  Solde: {game?.userBalance || '0'} {tokenSymbol}
-                </p>
+        
+        <div className="space-y-6">
+          {/* Dé central */}
+          <div className="flex flex-col items-center space-y-4">
+            <div className="relative">
+              <div className="bg-gray-700/50 rounded-3xl p-8 border-2 border-dashed border-avalanche-red/30">
+                {getDiceIcon(diceResult, animatingDice)}
               </div>
-              
-              <Button
-                onClick={handlePlaceBet}
-                disabled={isPlacingBet || !betAmount}
-                className="w-full bg-gradient-to-r from-avalanche-red to-red-600 hover:from-red-600 hover:to-avalanche-red text-white font-bold"
-              >
-                {isPlacingBet ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Placing Bet...
-                  </>
+              {lastWin && (
+                <div className="absolute -top-2 -right-2 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-bold animate-bounce">
+                  {lastWin.multiplier}
+                </div>
+              )}
+            </div>
+            
+            {diceResult && (
+              <div className="text-center">
+                <p className="text-xl font-bold text-white">Résultat: {diceResult}</p>
+                {lastWin ? (
+                  <p className="text-green-400 font-bold">
+                    🎉 Gain: {lastWin.amount} {token.symbol}
+                  </p>
                 ) : (
-                  <>
-                    <Coins className="mr-2 h-4 w-4" />
-                    PLACE BET
-                  </>
+                  <p className="text-red-400 font-bold">
+                    😔 Pas de chance cette fois
+                  </p>
                 )}
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Tableau des gains */}
-          <Card className="bg-gray-800 border-gray-700">
-            <CardHeader>
-              <CardTitle className="flex items-center text-green-400">
-                <TrendingUp className="mr-2 h-5 w-5" />
-                Payout Table
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {odds.map((odd, index) => (
-                  <div key={index} className="flex justify-between items-center p-2 bg-gray-700 rounded">
-                    <span className="text-sm text-gray-300">Roll {odd.range}</span>
-                    <div className="flex items-center space-x-2">
-                      <Badge variant={odd.multiplier === '0x' ? 'destructive' : 'default'}>
-                        {odd.multiplier}
-                      </Badge>
-                      <span className="text-xs text-gray-400">{odd.probability}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Historique des paris */}
-        <Card className="bg-gray-800 border-gray-700">
-          <CardHeader>
-            <CardTitle className="flex items-center text-blue-400">
-              <History className="mr-2 h-5 w-5" />
-              Bet History
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {betHistory.length === 0 ? (
-              <p className="text-gray-400 text-center py-4">Aucun pari pour le moment</p>
-            ) : (
-              <div className="space-y-2 max-h-40 overflow-y-auto">
-                {betHistory.slice(0, 10).map((bet, index) => (
-                  <div key={index} className="flex justify-between items-center p-2 bg-gray-700 rounded text-sm">
-                    <div>
-                      <span className="text-gray-300">Bet: {bet.betAmount} {tokenSymbol}</span>
-                      {bet.result && (
-                        <span className={`ml-2 ${bet.result.won ? 'text-green-400' : 'text-red-400'}`}>
-                          {bet.result.won ? <Trophy className="inline w-4 h-4" /> : <AlertTriangle className="inline w-4 h-4" />}
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-right">
-                      {bet.status === 'pending' ? (
-                        <Badge variant="outline">Pending</Badge>
-                      ) : bet.result ? (
-                        <span className={bet.result.won ? 'text-green-400' : 'text-red-400'}>
-                          {bet.result.payout} {tokenSymbol}
-                        </span>
-                      ) : null}
-                    </div>
-                  </div>
-                ))}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
 
-        <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
-          <p className="text-xs text-gray-400 text-center">
-            🎲 Les résultats sont générés par Chainlink VRF pour une randomisation vérifiable et équitable
-          </p>
+          <Separator className="bg-gray-700" />
+
+          {/* Zone de pari */}
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Montant du pari ({token.symbol})
+              </label>
+              <Input
+                type="number"
+                value={betAmount}
+                onChange={(e) => setBetAmount(e.target.value)}
+                placeholder="Entrez votre mise"
+                className="bg-gray-700/50 border-gray-600 text-white text-center text-lg font-bold"
+                disabled={isRolling}
+              />
+              <p className="text-xs text-gray-400 mt-1">
+                Solde: {token.userBalance || '0'} {token.symbol}
+              </p>
+            </div>
+            
+            <Button
+              onClick={placeBet}
+              disabled={isRolling || !betAmount}
+              className="w-full bg-gradient-to-r from-avalanche-red to-red-600 hover:from-red-600 hover:to-avalanche-red text-white font-black py-4 text-lg rounded-2xl transform hover:scale-105 transition-all duration-300"
+            >
+              {isRolling ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  LANCEMENT DU DÉ...
+                </>
+              ) : (
+                <>
+                  <Flame className="mr-2 h-5 w-5" />
+                  LANCER LE DÉ
+                </>
+              )}
+            </Button>
+          </div>
+
+          {/* Tableau des gains */}
+          <div className="space-y-3">
+            <h3 className="text-lg font-bold text-green-400 flex items-center">
+              <Trophy className="mr-2 h-5 w-5" />
+              Table des Gains
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              {getWinConditions().map((condition, index) => (
+                <div key={index} className="bg-gray-700/30 rounded-lg p-3 text-center">
+                  <div className="text-lg font-bold text-white mb-1">
+                    Dé {condition.dice}
+                  </div>
+                  <Badge variant={condition.multiplier === '0x' ? 'destructive' : 'default'} className="mb-2">
+                    {condition.multiplier}
+                  </Badge>
+                  <div className={`text-xs ${condition.color}`}>
+                    {condition.probability}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
