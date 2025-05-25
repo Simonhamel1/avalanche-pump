@@ -1,8 +1,9 @@
 import { ethers } from 'ethers';
 import { walletService } from './walletService';
 
-// Adresse du contrat Factory déployé sur Avalanche
-export const FACTORY_CONTRACT_ADDRESS = '0x174A0F11071C640B9B1b062551481F83F52d1643';
+// Adresses des contrats déployés sur Avalanche - NOUVELLES ADRESSES
+export const FACTORY_CONTRACT_ADDRESS = '0x2CB5A989febF39FA77889682adA469d9942634C5';
+export const VRF_SUBSCRIPTION_MANAGER_ADDRESS = '0x12972Fe6e8Ab1ac9bd6AED800fC57e21bbC62da6';
 
 // ABI du contrat ERC20TokenFactory
 const FACTORY_ABI = [
@@ -79,6 +80,30 @@ export interface TokenCreatedEvent {
   initialSupply: string;
   transactionHash: string;
   blockNumber: number;
+}
+
+export interface BetPlacedEvent {
+  player: string;
+  requestId: string;
+  betAmount: string;
+  transactionHash: string;
+}
+
+export interface BetResultEvent {
+  player: string;
+  requestId: string;
+  randomNumber: string;
+  payout: string;
+  won: boolean;
+  transactionHash: string;
+}
+
+export interface GambleBet {
+  player: string;
+  betAmount: string;
+  fulfilled: boolean;
+  randomNumber: string;
+  payout: string;
 }
 
 class ContractService {
@@ -359,6 +384,130 @@ class ContractService {
     } catch (error) {
       console.error('Erreur lors de la vérification du token factory:', error);
       return false;
+    }
+  }
+
+  /**
+   * Place un pari sur un token
+   */
+  async placeBet(tokenAddress: string, betAmount: string, useNativePayment: boolean = false): Promise<BetPlacedEvent> {
+    try {
+      const tokenContract = await this.getTokenContract(tokenAddress);
+      const decimals = await tokenContract.decimals();
+      const amountInWei = ethers.parseUnits(betAmount, decimals);
+      
+      console.log('Placing bet:', betAmount, 'tokens');
+      
+      const tx = await tokenContract.placeBet(amountInWei, useNativePayment);
+      const receipt = await tx.wait();
+      
+      // Récupérer l'événement BetPlaced
+      const betPlacedEvent = receipt.logs.find((log: any) => {
+        try {
+          const parsedLog = tokenContract.interface.parseLog(log);
+          return parsedLog?.name === 'BetPlaced';
+        } catch {
+          return false;
+        }
+      });
+
+      if (!betPlacedEvent) {
+        throw new Error('Événement BetPlaced non trouvé');
+      }
+
+      const parsedEvent = tokenContract.interface.parseLog(betPlacedEvent);
+      
+      return {
+        player: parsedEvent.args.player,
+        requestId: parsedEvent.args.requestId.toString(),
+        betAmount: ethers.formatUnits(parsedEvent.args.betAmount, decimals),
+        transactionHash: tx.hash
+      };
+    } catch (error: any) {
+      console.error('Erreur lors du pari:', error);
+      
+      if (error.code === 'USER_REJECTED') {
+        throw new Error('Transaction annulée par l\'utilisateur');
+      } else if (error.message?.includes('Insufficient balance')) {
+        throw new Error('Solde insuffisant pour ce pari');
+      } else if (error.message?.includes('Bet amount too low')) {
+        throw new Error('Montant du pari trop faible');
+      } else {
+        throw new Error(`Erreur lors du pari: ${error.message}`);
+      }
+    }
+  }
+
+  /**
+   * Obtient les détails d'un pari
+   */
+  async getBetDetails(tokenAddress: string, requestId: string): Promise<GambleBet> {
+    try {
+      const tokenContract = await this.getTokenContract(tokenAddress);
+      const decimals = await tokenContract.decimals();
+      
+      const betDetails = await tokenContract.getBetDetails(requestId);
+      
+      return {
+        player: betDetails.player,
+        betAmount: ethers.formatUnits(betDetails.betAmount, decimals),
+        fulfilled: betDetails.fulfilled,
+        randomNumber: betDetails.randomNumber.toString(),
+        payout: ethers.formatUnits(betDetails.payout, decimals)
+      };
+    } catch (error) {
+      console.error('Erreur lors de la récupération des détails du pari:', error);
+      throw new Error('Impossible de récupérer les détails du pari');
+    }
+  }
+
+  /**
+   * Obtient l'historique des paris d'un joueur
+   */
+  async getPlayerBets(tokenAddress: string, playerAddress: string): Promise<string[]> {
+    try {
+      const tokenContract = await this.getTokenContract(tokenAddress);
+      return await tokenContract.getPlayerBets(playerAddress);
+    } catch (error) {
+      console.error('Erreur lors de la récupération des paris du joueur:', error);
+      throw new Error('Impossible de récupérer l\'historique des paris');
+    }
+  }
+
+  /**
+   * Obtient le pari minimum pour un token
+   */
+  async getMinimumBet(tokenAddress: string): Promise<string> {
+    try {
+      const tokenContract = await this.getTokenContract(tokenAddress);
+      const decimals = await tokenContract.decimals();
+      const minBet = await tokenContract.minimumBet();
+      return ethers.formatUnits(minBet, decimals);
+    } catch (error) {
+      console.error('Erreur lors de la récupération du pari minimum:', error);
+      throw new Error('Impossible de récupérer le pari minimum');
+    }
+  }
+
+  /**
+   * Écoute les événements de résultats de paris
+   */
+  async subscribeToBetResults(tokenAddress: string, callback: (event: BetResultEvent) => void): Promise<void> {
+    try {
+      const tokenContract = await this.getTokenContract(tokenAddress);
+      
+      tokenContract.on('BetResult', (player, requestId, randomNumber, payout, won, event) => {
+        callback({
+          player,
+          requestId: requestId.toString(),
+          randomNumber: randomNumber.toString(),
+          payout: payout.toString(),
+          won,
+          transactionHash: event.transactionHash
+        });
+      });
+    } catch (error) {
+      console.error('Erreur lors de l\'abonnement aux résultats de paris:', error);
     }
   }
 
