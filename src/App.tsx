@@ -38,8 +38,8 @@ function App() {
           />
           <Routes>
             <Route path="/" element={<Home isWalletConnected={isWalletConnected} />} />
-            <Route path="/create" element={<CreateToken />} />
-            <Route path="/portfolio" element={<Portfolio />} />
+            <Route path="/create" element={<CreateToken isWalletConnected={isWalletConnected} />} />
+            <Route path="/portfolio" element={<Portfolio isWalletConnected={isWalletConnected} />} />
             <Route path="/gambling" element={<Gambling />} />
             <Route path="/about" element={<About />} />
             <Route path="*" element={<NotFound />} />
