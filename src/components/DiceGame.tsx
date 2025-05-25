@@ -41,6 +41,11 @@ const DiceGame: React.FC<DiceGameProps> = ({ token, onBetPlaced }) => {
     };
   }, [token.address]);
 
+  // Mettre à jour le solde quand le token change
+  useEffect(() => {
+    setPlayerBalance(token.userBalance || '0');
+  }, [token.userBalance]);
+
   useEffect(() => {
     return () => {
       // Cleanup lors du démontage du composant
@@ -67,17 +72,26 @@ const DiceGame: React.FC<DiceGameProps> = ({ token, onBetPlaced }) => {
 
   const loadGameDataWithService = async (service: DiceGameService) => {
     try {
-      const [stats, balance, history] = await Promise.all([
+      const [stats, history] = await Promise.all([
         service.getGameStats(),
-        service.getPlayerBalance(),
         service.getPlayerBetsWithDetails()
       ]);
       
       setGameStats(stats);
-      setPlayerBalance(balance);
+      // Utiliser le solde du token depuis les props au lieu du service
+      setPlayerBalance(token.userBalance || '0');
       setBetHistory(history);
     } catch (error) {
       console.error('Erreur lors du chargement des données:', error);
+      // En cas d'erreur (contrat non déployé), utiliser des valeurs par défaut pour permettre les tests
+      setGameStats({
+        minimumBet: '0.01',
+        totalBets: '0',
+        totalWinnings: '0',
+        winRate: '50',
+        houseEdge: '2'
+      });
+      setBetHistory([]);
     }
   };
 
@@ -118,6 +132,7 @@ const DiceGame: React.FC<DiceGameProps> = ({ token, onBetPlaced }) => {
       variant: won ? "default" : "destructive"
     });
     
+    // Recharger les stats du jeu et appeler onBetPlaced pour rafraîchir le solde du token
     loadGameDataWithService(result.service);
     onBetPlaced?.();
   };
@@ -177,12 +192,26 @@ const DiceGame: React.FC<DiceGameProps> = ({ token, onBetPlaced }) => {
       console.error('Erreur lors du placement du pari:', error);
       setIsRolling(false);
       setAnimatingDice(false);
+      setCurrentRequestId(null);
       
-      toast({
-        title: "Erreur",
-        description: error.message || "Impossible de placer le pari",
-        variant: "destructive"
-      });
+      // Vérifier si l'erreur est due à un contrat non configuré
+      if (error.message && error.message.includes('VOTRE_ADRESSE_TOKEN_ICI')) {
+        toast({
+          title: "Contrat non configuré",
+          description: "Pour utiliser le jeu de dés, vous devez d'abord déployer et configurer l'adresse du contrat dans src/config/contracts.ts",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Erreur",
+          description: error.message || "Impossible de placer le pari",
+          variant: "destructive"
+        });
+      }
+    }
+    
+    if (onBetPlaced) {
+      onBetPlaced();
     }
   };
 
