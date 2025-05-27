@@ -20,7 +20,7 @@ const StatsDisplay: React.FC<StatsDisplayProps> = ({
 }) => {
   const stats = [
     {
-      title: 'Tokens sur la plateforme',
+      title: 'Deployed Tokens',
       value: (totalTokens).toFixed(0),
       icon: TrendingUp,
       color: 'text-blue-600',
@@ -28,7 +28,7 @@ const StatsDisplay: React.FC<StatsDisplayProps> = ({
       borderColor: 'border-blue-200'
     },
     {
-      title: 'Valeur totale (AVAX)',
+      title: 'Total Value (AVAX)',
       value: (totalValue / 1e18).toFixed(4),
       icon: DollarSign,
       color: 'text-green-600',
@@ -36,7 +36,7 @@ const StatsDisplay: React.FC<StatsDisplayProps> = ({
       borderColor: 'border-green-200'
     },
     {
-      title: 'Vos tokens',
+      title: 'Your tokens',
       value: isWalletConnected ? (userTokens).toFixed(0) : '?',
       icon: Users,
       color: 'text-purple-600',
@@ -45,7 +45,7 @@ const StatsDisplay: React.FC<StatsDisplayProps> = ({
     },
     {
       title: 'Statut',
-      value: isWalletConnected ? 'Connecté' : 'Hors ligne',
+      value: isWalletConnected ? 'Connected' : 'Disconnected',
       icon: Activity,
       color: isWalletConnected ? 'text-green-600' : 'text-gray-600',
       bgColor: isWalletConnected ? 'bg-green-50' : 'bg-gray-50',

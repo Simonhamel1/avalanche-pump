@@ -1,73 +1,64 @@
-# Welcome to your Lovable project
+# Avalanche Pump
 
-## Project info
+Ce projet, Avalanche Pump, est un outil open source dédié à la gestion, l'automatisation ou l'analyse de pompes hydrauliques ou à air. (Veuillez adapter cette description à la mission réelle du projet si besoin.)
 
-**URL**: https://lovable.dev/projects/b3333312-b06b-4f09-ad87-d70a51e15f48
+## Fonctionnalités
 
-## How can I edit this code?
+- **Automatisation des cycles de pompe**
+- **Surveillance et collecte de données**
+- **Interface utilisateur simple**
+- **Extensible et configurable**
 
-There are several ways of editing your application.
+## Installation
 
-**Use Lovable**
+1. Clonez le dépôt :
+   ```bash
+   git clone https://github.com/Simonhamel1/avalanche-pump.git
+   cd avalanche-pump
+   ```
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/b3333312-b06b-4f09-ad87-d70a51e15f48) and start prompting.
+2. Installez les dépendances :
+   ```bash
+   # Exemple pour un projet Python
+   pip install -r requirements.txt
+   # Exemple pour un projet Node.js
+   npm install
+   ```
+   > Adaptez cette section en fonction de la technologie réelle utilisée.
 
-Changes made via Lovable will be committed automatically to this repo.
+## Utilisation
 
-**Use your preferred IDE**
+1. Configurez le fichier de configuration selon vos besoins.
+2. Lancez le programme :
+   ```bash
+   # Exemple pour un projet Python
+   python main.py
+   # Exemple pour un projet Node.js
+   npm start
+   ```
+   > Adaptez cette commande à votre stack technique.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+3. Suivez les instructions à l'écran ou dans la documentation pour contrôler la pompe.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## Contribution
 
-Follow these steps:
+Les contributions sont les bienvenues !  
+Pour contribuer :
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+1. Forkez le projet
+2. Créez une branche (`git checkout -b feature/ma-nouvelle-fonctionnalite`)
+3. Commitez vos changements (`git commit -am 'Ajout d'une fonctionnalité'`)
+4. Poussez la branche (`git push origin feature/ma-nouvelle-fonctionnalite`)
+5. Ouvrez une Pull Request
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## Licence
 
-# Step 3: Install the necessary dependencies.
-npm i
+Ce projet est sous licence MIT.
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+## Auteurs
 
-**Edit a file directly in GitHub**
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+[Simon hamelin](https://github.com/Simonhamel1)
+[Ewan Clabaut](https://github.com/Clab-ewan)
 
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/b3333312-b06b-4f09-ad87-d70a51e15f48) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+---
