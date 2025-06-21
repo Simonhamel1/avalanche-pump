@@ -40,12 +40,12 @@ const About: React.FC = () => {
           <CardHeader>
             <CardTitle className="flex items-center space-x-3 text-2xl font-black text-white glow-text">
               <Rocket className="w-8 h-8 text-avalanche-red" />
-              <span>What is AvalanchePump?</span>
+              <span>What is Token Forge?</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <p className="text-gray-300 leading-relaxed text-lg">
-              AvalanchePump is a decentralized platform that democratizes token creation on the 
+              Token Forge is a decentralized platform that democratizes token creation on the 
               Avalanche blockchain. Inspired by the success of Pump.fun, our platform uses 
               bonding curve technology to ensure fair and transparent pricing for all tokens.
             </p>

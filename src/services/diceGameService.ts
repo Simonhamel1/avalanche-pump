@@ -163,7 +163,7 @@ export class DiceGameService {
       const parsed = this.contract!.interface.parseLog(betPlacedEvent);
       const requestId = parsed!.args.requestId.toString();
       
-      console.log('Pari placé avec succès. Request ID:', requestId);
+      console.log('Bet placed successfully. Request ID:', requestId);
       return requestId;
     } catch (error) {
       console.error('Erreur lors du placement du pari:', error);

@@ -6,7 +6,6 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TokenService, CreateTokenParams } from '@/services/tokenService';
 import { walletService } from '@/services/walletService';
-import AvalancheStatus from '@/components/AvalancheStatus';
 import { Loader2, AlertCircle, CheckCircle, Plus, Info, Rocket, Zap, Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
@@ -292,19 +291,8 @@ const CreateToken: React.FC<CreateTokenProps> = ({ isWalletConnected }) => {
             </p>
             <Rocket className="w-8 h-8 text-avalanche-red animate-bounce delay-500" />
           </div>
-          <p className="text-lg text-gray-400 max-w-3xl mx-auto leading-relaxed">
-            Create your token on Avalanche with our bonding curve system
+          <p className="text-lg text-gray-400 max-w-3xl mx-auto leading-relaxed">            Create your token on Avalanche with our bonding curve system
           </p>
-        </div>
-
-        {/* Avalanche Status */}
-        <div className="mb-8">
-          <AvalancheStatus 
-            isConnected={isWalletConnected}
-            isAvalancheNetwork={walletService.isAvalancheNetwork()}
-            networkName={walletService.getNetworkName()}
-            onSwitchNetwork={handleSwitchToAvalanche}
-          />
         </div>
 
         <Card className="pump-card group bg-gradient-to-br from-gray-900/90 to-gray-800/90 backdrop-blur-xl border-gray-700/50 hover:border-avalanche-red/50 transition-all duration-500 mb-8">

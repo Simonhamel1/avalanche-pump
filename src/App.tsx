@@ -17,9 +17,8 @@ const queryClient = new QueryClient();
 
 function App() {
   const [isWalletConnected, setIsWalletConnected] = useState(false);
-
   useEffect(() => {
-    // Vérifier si le wallet est déjà connecté
+    // Check if wallet is already connected
     const connection = walletService.getConnection();
     setIsWalletConnected(connection.isConnected);
   }, []);

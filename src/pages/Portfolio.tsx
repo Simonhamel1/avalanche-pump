@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Token, TokenService } from '@/services/tokenService';
 import { Transaction, transactionService } from '@/services/transactionService';
 import { walletService } from '@/services/walletService';
-import AvalancheStatus from '@/components/AvalancheStatus';
 import TokenBalance from '@/components/TokenBalance';
 import TransactionList from '@/components/TransactionList';
 import StatsDisplay from '@/components/StatsDisplay';
@@ -222,21 +221,8 @@ const Portfolio: React.FC<PortfolioProps> = ({ isWalletConnected, walletAddress 
                   {viewMode === 'grid' ? 'LIST' : 'GRID'}
                 </span>
               </Button>
-            </div>
-          </div>
+            </div>          </div>
         </div>
-
-        {/* Avalanche Status */}
-        {isWalletConnected && (
-          <div className="mb-8">
-            <AvalancheStatus 
-              isConnected={isWalletConnected}
-              isAvalancheNetwork={walletService.isAvalancheNetwork()}
-              networkName={walletService.getNetworkName()}
-              onSwitchNetwork={handleSwitchToAvalanche}
-            />
-          </div>
-        )}
 
         {/* Global Stats Display */}
         <StatsDisplay

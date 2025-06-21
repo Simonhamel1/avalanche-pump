@@ -76,19 +76,19 @@ const DiceGame: React.FC<DiceGameProps> = ({ token, onBetPlaced }) => {
         service.getGameStats(),
         service.getPlayerBetsWithDetails()
       ]);
-      
-      setGameStats(stats);
-      // Utiliser le solde du token depuis les props au lieu du service
+        setGameStats(stats);
+      // Use token balance from props instead of service
       setPlayerBalance(token.userBalance || '0');
       setBetHistory(history);
     } catch (error) {
-      console.error('Erreur lors du chargement des données:', error);
-      // En cas d'erreur (contrat non déployé), utiliser des valeurs par défaut pour permettre les tests
+      console.error('Error loading data:', error);
+      // In case of error (contract not deployed), use default values to allow testing
       setGameStats({
         minimumBet: '0.01',
-        totalBets: '0',
+        totalBets: 0,
         totalWinnings: '0',
-        winRate: '50',
+        totalLosses: '0',
+        winRate: 50,
         houseEdge: '2'
       });
       setBetHistory([]);
@@ -98,7 +98,7 @@ const DiceGame: React.FC<DiceGameProps> = ({ token, onBetPlaced }) => {
   const setupEventListenersWithService = (service: DiceGameService) => {
     service.subscribeToEvents({
       onBetPlaced: (player, requestId, betAmount) => {
-        console.log('Pari placé:', { player, requestId, betAmount });
+        console.log('Bet placed:', { player, requestId, betAmount });
         setCurrentRequestId(requestId);
       },
       onBetResult: (player, requestId, randomNumber, payout, won) => {
@@ -172,7 +172,7 @@ const DiceGame: React.FC<DiceGameProps> = ({ token, onBetPlaced }) => {
       setCurrentRequestId(requestId);
       
       toast({
-        title: "Pari placé !",
+        title: "Bet Placed!",
         description: "En attente du résultat VRF...",
       });
       
@@ -191,20 +191,19 @@ const DiceGame: React.FC<DiceGameProps> = ({ token, onBetPlaced }) => {
     } catch (error: any) {
       console.error('Erreur lors du placement du pari:', error);
       setIsRolling(false);
-      setAnimatingDice(false);
-      setCurrentRequestId(null);
+      setAnimatingDice(false);      setCurrentRequestId(null);
       
-      // Vérifier si l'erreur est due à un contrat non configuré
+      // Check if the error is due to an unconfigured contract
       if (error.message && error.message.includes('VOTRE_ADRESSE_TOKEN_ICI')) {
         toast({
-          title: "Contrat non configuré",
-          description: "Pour utiliser le jeu de dés, vous devez d'abord déployer et configurer l'adresse du contrat dans src/config/contracts.ts",
+          title: "Contract not configured",
+          description: "To use the dice game, you must first deploy and configure the contract address in src/config/contracts.ts",
           variant: "destructive"
         });
       } else {
         toast({
-          title: "Erreur",
-          description: error.message || "Impossible de placer le pari",
+          title: "Error",
+          description: error.message || "Unable to place bet",
           variant: "destructive"
         });
       }

@@ -21,14 +21,13 @@ const WalletInstallPrompt: React.FC<WalletInstallPromptProps> = ({ isVisible, on
                 <AlertCircle className="w-8 h-8 text-orange-600" />
               </div>
             </div>
-            
-            <div>
+              <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Wallet Avalanche requis
+                Avalanche Wallet Required
               </h3>
               <p className="text-gray-600 text-sm">
-                Pour utiliser AvalanchePump, vous devez installer Core Wallet ou MetaMask 
-                et le configurer pour le réseau Avalanche.
+                To use Token Forge, you need to install Core Wallet or MetaMask 
+                and configure it for the Avalanche network.
               </p>
             </div>
 
@@ -41,7 +40,7 @@ const WalletInstallPrompt: React.FC<WalletInstallPromptProps> = ({ isVisible, on
               >
                 <Button className="w-full bg-avalanche-red hover:bg-red-600 text-white">
                   <Download className="mr-2 h-4 w-4" />
-                  Télécharger Core Wallet
+                  Download Core Wallet
                   <ExternalLink className="ml-2 h-4 w-4" />
                 </Button>
               </a>

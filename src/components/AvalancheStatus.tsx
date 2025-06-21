@@ -23,9 +23,9 @@ const AvalancheStatus: React.FC<AvalancheStatusProps> = ({
           <div className="flex items-center space-x-3">
             <AlertCircle className="w-5 h-5 text-orange-600" />
             <div className="flex-1">
-              <h3 className="font-medium text-orange-900">Wallet non connecté</h3>
+              <h3 className="font-medium text-orange-900">Wallet Not Connected</h3>
               <p className="text-sm text-orange-700">
-                Connectez votre wallet pour commencer à utiliser AvalanchePump
+                Connect your wallet to start using Token Forge
               </p>
             </div>
           </div>
@@ -42,9 +42,9 @@ const AvalancheStatus: React.FC<AvalancheStatusProps> = ({
             <div className="flex items-center space-x-3">
               <AlertCircle className="w-5 h-5 text-red-600" />
               <div>
-                <h3 className="font-medium text-red-900">Réseau incorrect</h3>
+                <h3 className="font-medium text-red-900">Wrong Network</h3>
                 <p className="text-sm text-red-700">
-                  Vous êtes connecté à {networkName}. Basculez vers Avalanche pour continuer.
+                  You are connected to {networkName}. Switch to Avalanche to continue.
                 </p>
               </div>
             </div>
@@ -55,7 +55,7 @@ const AvalancheStatus: React.FC<AvalancheStatusProps> = ({
                 className="bg-red-600 hover:bg-red-700 text-white"
               >
                 <ExternalLink className="mr-1 h-3 w-3" />
-                Avalanche
+                Switch to Avalanche
               </Button>
             )}
           </div>
@@ -72,9 +72,9 @@ const AvalancheStatus: React.FC<AvalancheStatusProps> = ({
           <div className="flex items-center space-x-2">
             <Zap className="w-4 h-4 text-avalanche-red" />
             <div>
-              <h3 className="font-medium text-green-900">Connecté à {networkName}</h3>
+              <h3 className="font-medium text-green-900">Connected to {networkName}</h3>
               <p className="text-sm text-green-700">
-                Votre wallet est prêt pour utiliser AvalanchePump
+                Your wallet is ready to use Token Forge
               </p>
             </div>
           </div>

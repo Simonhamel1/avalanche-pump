@@ -194,16 +194,6 @@ const Home: React.FC<HomeProps> = ({ isWalletConnected }) => {
           </div>
         </div>
 
-        {/* Avalanche Status */}
-        <div className="mb-8">
-          <AvalancheStatus 
-            isConnected={isWalletConnected}
-            isAvalancheNetwork={walletService.isAvalancheNetwork()}
-            networkName={walletService.getNetworkName()}
-            onSwitchNetwork={handleSwitchToAvalanche}
-          />
-        </div>
-
         {/* Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           <div className="pump-card bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-xl rounded-3xl p-8 border border-gray-700/50 transform hover:scale-105 transition-all duration-300">
