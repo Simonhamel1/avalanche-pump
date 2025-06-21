@@ -1,11 +1,11 @@
 import { ethers } from 'ethers';
 import { walletService } from './walletService';
 
-// Adresses des contrats déployés sur Avalanche - NOUVELLES ADRESSES
+// Contract addresses deployed on Avalanche - NEW ADDRESSES
 export const FACTORY_CONTRACT_ADDRESS = '0x2CB5A989febF39FA77889682adA469d9942634C5';
 export const VRF_SUBSCRIPTION_MANAGER_ADDRESS = '0x12972Fe6e8Ab1ac9bd6AED800fC57e21bbC62da6';
 
-// ABI du contrat ERC20TokenFactory
+// ERC20TokenFactory contract ABI
 const FACTORY_ABI = [
   // Events
   "event TokenCreated(address indexed tokenAddress, address indexed owner, string name, string symbol, uint8 decimals, uint256 initialSupply)",
@@ -24,7 +24,7 @@ const FACTORY_ABI = [
   "function createToken(string memory name, string memory symbol, uint8 decimals, uint256 initialSupply) payable returns (address)"
 ];
 
-// ABI du contrat CustomERC20Token
+// CustomERC20Token contract ABI
 const TOKEN_ABI = [
   // Read functions
   "function name() view returns (string)",
@@ -53,7 +53,7 @@ const TOKEN_ABI = [
   "event Burn(address indexed from, uint256 value)"
 ];
 
-// Types pour les tokens
+// Token types
 export interface TokenInfo {
   address: string;
   name: string;
@@ -110,13 +110,13 @@ class ContractService {
   private factoryContract: ethers.Contract | null = null;
 
   /**
-   * Obtient une instance du contrat factory
+   * Gets an instance of the factory contract
    */
   private async getFactoryContract(): Promise<ethers.Contract> {
     if (!this.factoryContract) {
       const provider = walletService.getProvider();
       if (!provider) {
-        throw new Error('Aucun provider disponible');
+        throw new Error('No provider available');
       }
 
       const signer = await provider.getSigner();
@@ -130,12 +130,12 @@ class ContractService {
   }
 
   /**
-   * Obtient une instance d'un contrat token
+   * Gets an instance of a token contract
    */
   private async getTokenContract(tokenAddress: string): Promise<ethers.Contract> {
     const provider = walletService.getProvider();
     if (!provider) {
-      throw new Error('Aucun provider disponible');
+      throw new Error('No provider available');
     }
 
     const signer = await provider.getSigner();
@@ -143,7 +143,7 @@ class ContractService {
   }
 
   /**
-   * Obtient les frais de création de token
+   * Gets the token creation fee
    */
   async getCreationFee(): Promise<string> {
     try {
@@ -151,25 +151,25 @@ class ContractService {
       const fee = await factory.creationFee();
       return ethers.formatEther(fee);
     } catch (error) {
-      console.error('Erreur lors de la récupération des frais:', error);
-      throw new Error('Impossible de récupérer les frais de création');
+      console.error('Error retrieving fees:', error);
+      throw new Error('Unable to retrieve creation fees');
     }
   }
 
   /**
-   * Crée un nouveau token
+   * Creates a new token
    */
   async createToken(params: TokenCreationParams): Promise<TokenCreatedEvent> {
     try {
       const factory = await this.getFactoryContract();
       
-      // Obtenir les frais de création
+      // Get creation fee
       const fee = await factory.creationFee();
       
-      console.log('Création du token avec les paramètres:', params);
-      console.log('Frais requis:', ethers.formatEther(fee), 'AVAX');
+      console.log('Creating token with parameters:', params);
+      console.log('Required fee:', ethers.formatEther(fee), 'AVAX');
 
-      // Appeler la fonction createToken avec les frais
+      // Call createToken function with fee
       const tx = await factory.createToken(
         params.name,
         params.symbol,
@@ -178,13 +178,13 @@ class ContractService {
         { value: fee }
       );
 
-      console.log('Transaction envoyée:', tx.hash);
+      console.log('Transaction sent:', tx.hash);
       
-      // Attendre la confirmation
+      // Wait for confirmation
       const receipt = await tx.wait();
-      console.log('Transaction confirmée:', receipt);
+      console.log('Transaction confirmed:', receipt);
 
-      // Récupérer l'événement TokenCreated
+      // Get TokenCreated event
       const tokenCreatedEvent = receipt.logs.find((log: any) => {
         try {
           const parsedLog = factory.interface.parseLog(log);
@@ -195,7 +195,7 @@ class ContractService {
       });
 
       if (!tokenCreatedEvent) {
-        throw new Error('Événement TokenCreated non trouvé dans la transaction');
+        throw new Error('TokenCreated event not found in transaction');
       }
 
       const parsedEvent = factory.interface.parseLog(tokenCreatedEvent);
@@ -211,48 +211,48 @@ class ContractService {
         blockNumber: receipt.blockNumber
       };
     } catch (error: any) {
-      console.error('Erreur lors de la création du token:', error);
+      console.error('Error creating token:', error);
       
       if (error.code === 'INSUFFICIENT_FUNDS') {
-        throw new Error('Fonds insuffisants pour payer les frais de transaction et de création');
+        throw new Error('Insufficient funds to pay transaction and creation fees');
       } else if (error.code === 'USER_REJECTED') {
-        throw new Error('Transaction annulée par l\'utilisateur');
+        throw new Error('Transaction cancelled by user');
       } else if (error.message?.includes('Insufficient fee')) {
-        throw new Error('Frais de création insuffisants');
+        throw new Error('Insufficient creation fee');
       } else {
-        throw new Error(`Erreur lors de la création du token: ${error.message}`);
+        throw new Error(`Error creating token: ${error.message}`);
       }
     }
   }
 
   /**
-   * Obtient tous les tokens créés par le factory
+   * Gets all tokens created by the factory
    */
   async getAllTokens(): Promise<string[]> {
     try {
       const factory = await this.getFactoryContract();
       return await factory.getAllTokens();
     } catch (error) {
-      console.error('Erreur lors de la récupération des tokens:', error);
-      throw new Error('Impossible de récupérer la liste des tokens');
+      console.error('Error retrieving tokens:', error);
+      throw new Error('Unable to retrieve token list');
     }
   }
 
   /**
-   * Obtient les tokens créés par un propriétaire spécifique
+   * Gets tokens created by a specific owner
    */
   async getTokensByOwner(owner: string): Promise<string[]> {
     try {
       const factory = await this.getFactoryContract();
       return await factory.getTokensByOwner(owner);
     } catch (error) {
-      console.error('Erreur lors de la récupération des tokens du propriétaire:', error);
-      throw new Error('Impossible de récupérer les tokens du propriétaire');
+      console.error('Error retrieving owner tokens:', error);
+      throw new Error('Unable to retrieve owner\'s tokens');
     }
   }
 
   /**
-   * Obtient les informations détaillées d'un token
+   * Gets detailed information about a token
    */
   async getTokenInfo(tokenAddress: string, userAddress?: string): Promise<TokenInfo> {
     try {
@@ -282,13 +282,13 @@ class ContractService {
         userBalance
       };
     } catch (error) {
-      console.error('Erreur lors de la récupération des informations du token:', error);
-      throw new Error('Impossible de récupérer les informations du token');
+      console.error('Error retrieving token information:', error);
+      throw new Error('Unable to retrieve token information');
     }
   }
 
   /**
-   * Obtient les informations de plusieurs tokens
+   * Gets information about multiple tokens
    */
   async getMultipleTokensInfo(tokenAddresses: string[], userAddress?: string): Promise<TokenInfo[]> {
     try {
@@ -297,13 +297,13 @@ class ContractService {
       );
       return await Promise.all(promises);
     } catch (error) {
-      console.error('Erreur lors de la récupération des informations des tokens:', error);
-      throw new Error('Impossible de récupérer les informations des tokens');
+      console.error('Error retrieving tokens information:', error);
+      throw new Error('Unable to retrieve tokens information');
     }
   }
 
   /**
-   * Transfère des tokens
+   * Transfers tokens
    */
   async transferToken(tokenAddress: string, to: string, amount: string): Promise<string> {
     try {
@@ -316,18 +316,18 @@ class ContractService {
       
       return tx.hash;
     } catch (error: any) {
-      console.error('Erreur lors du transfert:', error);
+      console.error('Error during transfer:', error);
       
       if (error.code === 'USER_REJECTED') {
-        throw new Error('Transaction annulée par l\'utilisateur');
+        throw new Error('Transaction cancelled by user');
       } else {
-        throw new Error(`Erreur lors du transfert: ${error.message}`);
+        throw new Error(`Error during transfer: ${error.message}`);
       }
     }
   }
 
   /**
-   * Mint de nouveaux tokens (seulement le propriétaire)
+   * Mints new tokens (owner only)
    */
   async mintTokens(tokenAddress: string, to: string, amount: string): Promise<string> {
     try {
@@ -340,18 +340,18 @@ class ContractService {
       
       return tx.hash;
     } catch (error: any) {
-      console.error('Erreur lors du mint:', error);
+      console.error('Error during mint:', error);
       
       if (error.code === 'USER_REJECTED') {
-        throw new Error('Transaction annulée par l\'utilisateur');
+        throw new Error('Transaction cancelled by user');
       } else {
-        throw new Error(`Erreur lors du mint: ${error.message}`);
+        throw new Error(`Error during mint: ${error.message}`);
       }
     }
   }
 
   /**
-   * Burn des tokens
+   * Burns tokens
    */
   async burnTokens(tokenAddress: string, amount: string): Promise<string> {
     try {
@@ -364,31 +364,31 @@ class ContractService {
       
       return tx.hash;
     } catch (error: any) {
-      console.error('Erreur lors du burn:', error);
+      console.error('Error during burn:', error);
       
       if (error.code === 'USER_REJECTED') {
-        throw new Error('Transaction annulée par l\'utilisateur');
+        throw new Error('Transaction cancelled by user');
       } else {
-        throw new Error(`Erreur lors du burn: ${error.message}`);
+        throw new Error(`Error during burn: ${error.message}`);
       }
     }
   }
 
   /**
-   * Vérifie si une adresse est un token créé par notre factory
+   * Checks if an address is a token created by our factory
    */
   async isFactoryToken(tokenAddress: string): Promise<boolean> {
     try {
       const factory = await this.getFactoryContract();
       return await factory.isFactoryToken(tokenAddress);
     } catch (error) {
-      console.error('Erreur lors de la vérification du token factory:', error);
+      console.error('Error verifying factory token:', error);
       return false;
     }
   }
 
   /**
-   * Place un pari sur un token
+   * Places a bet on a token
    */
   async placeBet(tokenAddress: string, betAmount: string, useNativePayment: boolean = false): Promise<BetPlacedEvent> {
     try {
@@ -401,7 +401,7 @@ class ContractService {
       const tx = await tokenContract.placeBet(amountInWei, useNativePayment);
       const receipt = await tx.wait();
       
-      // Récupérer l'événement BetPlaced
+      // Get the BetPlaced event
       const betPlacedEvent = receipt.logs.find((log: any) => {
         try {
           const parsedLog = tokenContract.interface.parseLog(log);
@@ -412,7 +412,7 @@ class ContractService {
       });
 
       if (!betPlacedEvent) {
-        throw new Error('Événement BetPlaced non trouvé');
+        throw new Error('BetPlaced event not found');
       }
 
       const parsedEvent = tokenContract.interface.parseLog(betPlacedEvent);
@@ -424,22 +424,22 @@ class ContractService {
         transactionHash: tx.hash
       };
     } catch (error: any) {
-      console.error('Erreur lors du pari:', error);
+      console.error('Error during bet placement:', error);
       
       if (error.code === 'USER_REJECTED') {
-        throw new Error('Transaction annulée par l\'utilisateur');
+        throw new Error('Transaction cancelled by user');
       } else if (error.message?.includes('Insufficient balance')) {
-        throw new Error('Solde insuffisant pour ce pari');
+        throw new Error('Insufficient balance for this bet');
       } else if (error.message?.includes('Bet amount too low')) {
-        throw new Error('Montant du pari trop faible');
+        throw new Error('Bet amount too low');
       } else {
-        throw new Error(`Erreur lors du pari: ${error.message}`);
+        throw new Error(`Error during bet placement: ${error.message}`);
       }
     }
   }
 
   /**
-   * Obtient les détails d'un pari
+   * Gets the details of a bet
    */
   async getBetDetails(tokenAddress: string, requestId: string): Promise<GambleBet> {
     try {
@@ -456,26 +456,26 @@ class ContractService {
         payout: ethers.formatUnits(betDetails.payout, decimals)
       };
     } catch (error) {
-      console.error('Erreur lors de la récupération des détails du pari:', error);
-      throw new Error('Impossible de récupérer les détails du pari');
+      console.error('Error retrieving bet details:', error);
+      throw new Error('Unable to retrieve bet details');
     }
   }
 
   /**
-   * Obtient l'historique des paris d'un joueur
+   * Gets a player's bet history
    */
   async getPlayerBets(tokenAddress: string, playerAddress: string): Promise<string[]> {
     try {
       const tokenContract = await this.getTokenContract(tokenAddress);
       return await tokenContract.getPlayerBets(playerAddress);
     } catch (error) {
-      console.error('Erreur lors de la récupération des paris du joueur:', error);
-      throw new Error('Impossible de récupérer l\'historique des paris');
+      console.error('Error retrieving player bets:', error);
+      throw new Error('Unable to retrieve bet history');
     }
   }
 
   /**
-   * Obtient le pari minimum pour un token
+   * Gets the minimum bet for a token
    */
   async getMinimumBet(tokenAddress: string): Promise<string> {
     try {
@@ -484,13 +484,13 @@ class ContractService {
       const minBet = await tokenContract.minimumBet();
       return ethers.formatUnits(minBet, decimals);
     } catch (error) {
-      console.error('Erreur lors de la récupération du pari minimum:', error);
-      throw new Error('Impossible de récupérer le pari minimum');
+      console.error('Error retrieving minimum bet:', error);
+      throw new Error('Unable to retrieve minimum bet');
     }
   }
 
   /**
-   * Écoute les événements de résultats de paris
+   * Subscribes to bet result events
    */
   async subscribeToBetResults(tokenAddress: string, callback: (event: BetResultEvent) => void): Promise<void> {
     try {
@@ -507,12 +507,12 @@ class ContractService {
         });
       });
     } catch (error) {
-      console.error('Erreur lors de l\'abonnement aux résultats de paris:', error);
+      console.error('Error subscribing to bet results:', error);
     }
   }
 
   /**
-   * Écoute les événements de création de tokens
+   * Subscribes to token creation events
    */
   async subscribeToTokenCreation(callback: (event: TokenCreatedEvent) => void): Promise<void> {
     try {
@@ -531,12 +531,12 @@ class ContractService {
         });
       });
     } catch (error) {
-      console.error('Erreur lors de l\'abonnement aux événements:', error);
+      console.error('Error subscribing to events:', error);
     }
   }
 
   /**
-   * Nettoie les abonnements aux événements
+   * Cleans up event subscriptions
    */
   cleanup(): void {
     if (this.factoryContract) {

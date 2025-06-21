@@ -1,4 +1,4 @@
-// Service pour la gestion des wallets Avalanche avec Core
+// Service for managing Avalanche wallets with Core
 import { ethers } from 'ethers';
 
 export interface WalletConnection {
@@ -9,7 +9,7 @@ export interface WalletConnection {
   provider?: any;
 }
 
-// Configuration réseau Avalanche C-Chain
+// Avalanche C-Chain network configuration
 const AVALANCHE_MAINNET = {
   chainId: 43114,
   chainName: 'Avalanche C-Chain',
@@ -51,37 +51,37 @@ export class WalletService {
 
   async connectWallet(): Promise<WalletConnection> {
     try {
-      // Vérifier si Core/MetaMask est installé
+      // Check if Core/MetaMask is installed
       if (!window.ethereum) {
-        throw new Error('Core Wallet ou MetaMask non détecté. Veuillez installer Core Wallet.');
+        throw new Error('Core Wallet or MetaMask not detected. Please install Core Wallet.');
       }
 
-      console.log('Tentative de connexion au wallet Core/MetaMask...');
+      console.log('Attempting to connect to Core/MetaMask wallet...');
       
-      // Demander l'accès aux comptes
+      // Request access to accounts
       const accounts = await window.ethereum.request({ 
         method: 'eth_requestAccounts' 
       });
 
       if (!accounts || accounts.length === 0) {
-        throw new Error('Aucun compte trouvé');
+        throw new Error('No account found');
       }
 
-      // Créer le provider ethers
+      // Create ethers provider
       this.provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await this.provider.getSigner();
       const address = await signer.getAddress();
 
-      // Vérifier le réseau actuel
+      // Check current network
       const network = await this.provider.getNetwork();
-      console.log('Réseau actuel:', network.chainId);
+      console.log('Current network:', network.chainId);
 
-      // Basculer vers Avalanche si nécessaire
+      // Switch to Avalanche if necessary
       if (network.chainId !== 43114n && network.chainId !== 43113n) {
         await this.switchToAvalanche();
       }
 
-      // Obtenir le solde
+      // Get balance
       const balance = await this.provider.getBalance(address);
       const balanceInAvax = ethers.formatEther(balance);
 
@@ -93,41 +93,41 @@ export class WalletService {
         provider: this.provider
       };
 
-      console.log('Wallet connecté:', this.connection.address);
-      console.log('Solde:', balanceInAvax, 'AVAX');
+      console.log('Wallet connected:', this.connection.address);
+      console.log('Balance:', balanceInAvax, 'AVAX');
 
-      // Écouter les changements de compte
+      // Listen for account changes
       this.setupEventListeners();
 
       return this.connection;
     } catch (error) {
-      console.error('Erreur de connexion wallet:', error);
-      throw new Error(error instanceof Error ? error.message : 'Impossible de connecter le wallet');
+      console.error('Wallet connection error:', error);
+      throw new Error(error instanceof Error ? error.message : 'Unable to connect wallet');
     }
   }
 
   private setupEventListeners(): void {
     if (window.ethereum) {
-      // Écouter les changements de compte
+      // Listen for account changes
       window.ethereum.on('accountsChanged', (accounts: string[]) => {
         if (accounts.length === 0) {
           this.disconnectWallet();
         } else {
           this.connection.address = accounts[0];
-          // Rafraîchir le solde
+          // Refresh balance
           this.updateBalance();
         }
       });
 
-      // Écouter les changements de réseau
+      // Listen for network changes
       window.ethereum.on('chainChanged', (chainId: string) => {
         const newChainId = parseInt(chainId, 16);
         this.connection.chainId = newChainId;
-        console.log('Réseau changé:', newChainId);
+        console.log('Network changed:', newChainId);
         
-        // Vérifier si on est toujours sur Avalanche
+        // Check if still on Avalanche
         if (newChainId !== 43114 && newChainId !== 43113) {
-          console.warn('Vous n\'êtes plus sur le réseau Avalanche');
+          console.warn('You are no longer on the Avalanche network');
         }
       });
     }
@@ -139,7 +139,7 @@ export class WalletService {
         const balance = await this.provider.getBalance(this.connection.address);
         this.connection.balance = ethers.formatEther(balance);
       } catch (error) {
-        console.error('Erreur lors de la mise à jour du solde:', error);
+        console.error('Error updating balance:', error);
       }
     }
   }
@@ -152,7 +152,7 @@ export class WalletService {
       provider: null
     };
     this.provider = null;
-    console.log('Wallet déconnecté');
+    console.log('Wallet disconnected');
   }
 
   getConnection(): WalletConnection {
@@ -162,22 +162,22 @@ export class WalletService {
   async switchToAvalanche(useTestnet: boolean = false): Promise<void> {
     try {
       if (!window.ethereum) {
-        throw new Error('Wallet non détecté');
+        throw new Error('Wallet not detected');
       }
 
       const targetNetwork = useTestnet ? AVALANCHE_FUJI : AVALANCHE_MAINNET;
       const chainIdHex = `0x${targetNetwork.chainId.toString(16)}`;
 
-      console.log(`Basculement vers ${targetNetwork.chainName}...`);
+      console.log(`Switching to ${targetNetwork.chainName}...`);
 
       try {
-        // Essayer de basculer vers le réseau
+        // Try to switch to the network
         await window.ethereum.request({
           method: 'wallet_switchEthereumChain',
           params: [{ chainId: chainIdHex }],
         });
       } catch (switchError: any) {
-        // Si le réseau n'est pas ajouté, l'ajouter
+        // If the network is not added, add it
         if (switchError.code === 4902) {
           await window.ethereum.request({
             method: 'wallet_addEthereumChain',
@@ -196,28 +196,28 @@ export class WalletService {
         }
       }
 
-      console.log(`Basculement vers ${targetNetwork.chainName} réussi`);
+      console.log(`Successfully switched to ${targetNetwork.chainName}`);
     } catch (error) {
-      console.error('Erreur lors du changement de réseau:', error);
-      throw new Error('Impossible de basculer vers Avalanche');
+      console.error('Error switching network:', error);
+      throw new Error('Unable to switch to Avalanche');
     }
   }
 
   async getBalance(address?: string): Promise<string> {
     try {
       if (!this.provider) {
-        throw new Error('Provider non initialisé');
+        throw new Error('Provider not initialized');
       }
 
       const targetAddress = address || this.connection.address;
       if (!targetAddress) {
-        throw new Error('Adresse non disponible');
+        throw new Error('Address not available');
       }
 
       const balance = await this.provider.getBalance(targetAddress);
       return ethers.formatEther(balance);
     } catch (error) {
-      console.error('Erreur lors de la récupération du solde:', error);
+      console.error('Error retrieving balance:', error);
       throw error;
     }
   }
@@ -233,7 +233,7 @@ export class WalletService {
       case 43113:
         return 'Avalanche Fuji Testnet';
       default:
-        return 'Réseau inconnu';
+        return 'Unknown Network';
     }
   }
 
@@ -246,5 +246,5 @@ export class WalletService {
   }
 }
 
-// Export de l'instance singleton pour faciliter l'utilisation
+// Export singleton instance for easy use
 export const walletService = WalletService.getInstance();
