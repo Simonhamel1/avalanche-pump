@@ -28,20 +28,20 @@ const DiceGame: React.FC<DiceGameProps> = ({ token, onBetPlaced }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Create a service instance for this specific token
+    // Créer une instance de service pour ce token spécifique
     const service = createDiceGameServiceForToken(token.address);
     setDiceGameService(service);
     
-    // Initialize the game with the new service
+    // Initialiser le jeu avec le nouveau service
     initializeGameWithService(service);
 
     return () => {
-      // Cleanup when token changes or component unmounts
+      // Nettoyage lors du changement de token ou démontage du composant
       service.cleanup();
     };
   }, [token.address]);
 
-  // Update balance when token changes
+  // Mettre à jour le solde lors du changement de token
   useEffect(() => {
     setPlayerBalance(token.userBalance || '0');
   }, [token.userBalance]);
@@ -238,7 +238,6 @@ const DiceGame: React.FC<DiceGameProps> = ({ token, onBetPlaced }) => {
     { range: '95-98%', multiplier: '10x', probability: '4%', color: 'text-purple-400' },
     { range: '99%', multiplier: '50x (JACKPOT!)', probability: '1%', color: 'text-orange-400' }
   ];
-
   return (
     <div className="space-y-6 p-4">
       {/* Zone de jeu principale */}
