@@ -29,7 +29,7 @@ const NetworkStatus: React.FC<NetworkStatusProps> = ({
           <AlertCircle className="w-3 h-3" />
         )}
         <span className="text-xs font-medium">
-          {isConnected ? 'Connecté' : 'Déconnecté'}
+          {isConnected ? 'Connected' : 'Disconnected'}
         </span>
       </Badge>
       

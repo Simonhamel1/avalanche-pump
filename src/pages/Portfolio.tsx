@@ -314,11 +314,9 @@ const Portfolio: React.FC<PortfolioProps> = ({ isWalletConnected, walletAddress 
               <span className="hidden sm:inline">REFRESH</span>
             </Button>
           </div>
-        </div>
-
-        {/* Tabs for different views */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-8 bg-transparent p-2">
+        </div>        {/* Tabs for different views */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mb-20">
+          <TabsList className="grid w-full grid-cols-2 mb-12 bg-transparent p-2">
             <TabsTrigger 
               value="portfolio" 
               className="flex items-center gap-3 data-[state=active]:bg-avalanche-red data-[state=active]:text-white text-gray-400 font-bold text-lg py-4 rounded-xl transition-all duration-300" 

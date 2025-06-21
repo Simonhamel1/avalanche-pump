@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -38,7 +37,7 @@ const GamblingModal: React.FC<GamblingModalProps> = ({ isOpen, onClose, token, o
       
       const requestId = await gamblingService.placeBet(token.address, betAmount);
       
-      // Simuler un résultat aléatoire pour l'exemple
+      // Simulate a random result for the example
       setTimeout(() => {
         const randomResult = Math.floor(Math.random() * 6) + 1;
         setDiceResult(randomResult);
@@ -52,8 +51,8 @@ const GamblingModal: React.FC<GamblingModalProps> = ({ isOpen, onClose, token, o
         }
         
         toast({
-          title: payout > 0 ? "🎉 Victoire !" : "😔 Défaite",
-          description: `Dé: ${randomResult} - ${payout > 0 ? `Gain: ${payout} ${token.symbol}` : 'Meilleure chance la prochaine fois !'}`,
+          title: payout > 0 ? "🎉 Victory!" : "😔 Defeat",
+          description: `Dice: ${randomResult} - ${payout > 0 ? `Win: ${payout} ${token.symbol}` : 'Better luck next time!'}`,
           variant: payout > 0 ? "default" : "destructive"
         });
         
@@ -64,10 +63,10 @@ const GamblingModal: React.FC<GamblingModalProps> = ({ isOpen, onClose, token, o
     } catch (error) {
       setIsRolling(false);
       setAnimatingDice(false);
-      console.error('Erreur lors du pari:', error);
+      console.error('Error placing bet:', error);
       toast({
-        title: "Erreur",
-        description: error instanceof Error ? error.message : "Erreur lors du placement du pari",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error placing the bet",
         variant: "destructive"
       });
     }
@@ -96,12 +95,12 @@ const GamblingModal: React.FC<GamblingModalProps> = ({ isOpen, onClose, token, o
       <DialogContent className="sm:max-w-[600px] bg-gradient-to-br from-gray-800/95 to-gray-900/95 border-avalanche-red/30 text-white">
         <DialogHeader>
           <DialogTitle className="text-2xl font-black text-center text-transparent bg-clip-text bg-gradient-to-r from-avalanche-red to-red-400">
-            🎲 JEU DE DÉ - {token.symbol}
+            🎲 DICE GAME - {token.symbol}
           </DialogTitle>
         </DialogHeader>
         
         <div className="space-y-6">
-          {/* Dé central */}
+          {/* Central Dice */}
           <div className="flex flex-col items-center space-y-4">
             <div className="relative">
               <div className="bg-gray-700/50 rounded-3xl p-8 border-2 border-dashed border-avalanche-red/30">
@@ -116,14 +115,14 @@ const GamblingModal: React.FC<GamblingModalProps> = ({ isOpen, onClose, token, o
             
             {diceResult && (
               <div className="text-center">
-                <p className="text-xl font-bold text-white">Résultat: {diceResult}</p>
+                <p className="text-xl font-bold text-white">Result: {diceResult}</p>
                 {lastWin ? (
                   <p className="text-green-400 font-bold">
-                    🎉 Gain: {lastWin.amount} {token.symbol}
+                    🎉 Win: {lastWin.amount} {token.symbol}
                   </p>
                 ) : (
                   <p className="text-red-400 font-bold">
-                    😔 Pas de chance cette fois
+                    😔 No luck this time
                   </p>
                 )}
               </div>
@@ -132,22 +131,22 @@ const GamblingModal: React.FC<GamblingModalProps> = ({ isOpen, onClose, token, o
 
           <Separator className="bg-gray-700" />
 
-          {/* Zone de pari */}
+          {/* Betting Area */}
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Montant du pari ({token.symbol})
+                Bet Amount ({token.symbol})
               </label>
               <Input
                 type="number"
                 value={betAmount}
                 onChange={(e) => setBetAmount(e.target.value)}
-                placeholder="Entrez votre mise"
+                placeholder="Enter your bet"
                 className="bg-gray-700/50 border-gray-600 text-white text-center text-lg font-bold"
                 disabled={isRolling}
               />
               <p className="text-xs text-gray-400 mt-1">
-                Solde: {token.userBalance || '0'} {token.symbol}
+                Balance: {token.userBalance || '0'} {token.symbol}
               </p>
             </div>
             
@@ -159,28 +158,28 @@ const GamblingModal: React.FC<GamblingModalProps> = ({ isOpen, onClose, token, o
               {isRolling ? (
                 <>
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  LANCEMENT DU DÉ...
+                  ROLLING DICE...
                 </>
               ) : (
                 <>
                   <Flame className="mr-2 h-5 w-5" />
-                  LANCER LE DÉ
+                  ROLL THE DICE
                 </>
               )}
             </Button>
           </div>
 
-          {/* Tableau des gains */}
+          {/* Payouts Table */}
           <div className="space-y-3">
             <h3 className="text-lg font-bold text-green-400 flex items-center">
               <Trophy className="mr-2 h-5 w-5" />
-              Table des Gains
+              Payout Table
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
               {getWinConditions().map((condition, index) => (
                 <div key={index} className="bg-gray-700/30 rounded-lg p-3 text-center">
                   <div className="text-lg font-bold text-white mb-1">
-                    Dé {condition.dice}
+                    Dice {condition.dice}
                   </div>
                   <Badge variant={condition.multiplier === '0x' ? 'destructive' : 'default'} className="mb-2">
                     {condition.multiplier}

@@ -287,20 +287,20 @@ const Home: React.FC<HomeProps> = ({ isWalletConnected }) => {
                   />
                 </div>
                 ))}
-              </div>
-              {filteredTokens.length > 9 && (
+                </div>
+                {filteredTokens.length > 9 && (
                 <div className="text-center mt-8">
-                <p className="text-gray-400 font-bold">
-                  Affichage de 9 tokens sur {filteredTokens.length} disponibles
-                </p>
-                <Button 
+                  <p className="text-gray-400 font-bold">
+                  Showing 9 tokens out of {filteredTokens.length} available
+                  </p>
+                  <Button 
                   variant="outline" 
                   className="mt-4 pump-button-outline border-2 border-avalanche-red text-avalanche-red hover:bg-avalanche-red hover:text-white font-bold px-6 py-3 rounded-2xl"
-                >
-                  Voir plus de tokens
-                </Button>
+                  >
+                  View more tokens
+                  </Button>
                 </div>
-              )}
+                )}
               </>
             ) : (
               <div className="text-center py-20">

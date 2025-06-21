@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -28,7 +27,7 @@ const BuyTokenModal: React.FC<BuyTokenModalProps> = ({
     e.preventDefault();
     
     if (!amount || parseFloat(amount) <= 0) {
-      setError('Veuillez entrer un montant valide');
+      setError('Please enter a valid amount');
       return;
     }
 
@@ -40,7 +39,7 @@ const BuyTokenModal: React.FC<BuyTokenModalProps> = ({
       setAmount('');
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur lors de l\'achat');
+      setError(err instanceof Error ? err.message : 'Error during purchase');
     } finally {
       setIsLoading(false);
     }
@@ -73,13 +72,13 @@ const BuyTokenModal: React.FC<BuyTokenModalProps> = ({
                 target.src = `https://via.placeholder.com/24/E84142/FFFFFF?text=${token.symbol.charAt(0)}`;
               }}
             />
-            <span>Acheter {token.symbol}</span>
+            <span>Buy {token.symbol}</span>
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="amount">Montant en AVAX</Label>
+            <Label htmlFor="amount">Amount in AVAX</Label>
             <Input
               id="amount"
               type="number"
@@ -98,13 +97,13 @@ const BuyTokenModal: React.FC<BuyTokenModalProps> = ({
           {amount && (
             <div className="bg-gray-50 p-3 rounded-md">
               <p className="text-sm text-gray-600">
-                Vous recevrez environ
+                You will receive approximately
               </p>
               <p className="font-semibold text-avalanche-dark">
-                {calculateTokens().toLocaleString('fr-FR', { maximumFractionDigits: 2 })} {token.symbol}
+                {calculateTokens().toLocaleString('en-US', { maximumFractionDigits: 2 })} {token.symbol}
               </p>
               <p className="text-xs text-gray-500 mt-1">
-                Prix: {token.currentPrice.toFixed(6)} AVAX par {token.symbol}
+                Price: {token.currentPrice.toFixed(6)} AVAX per {token.symbol}
               </p>
             </div>
           )}
@@ -124,7 +123,7 @@ const BuyTokenModal: React.FC<BuyTokenModalProps> = ({
               disabled={isLoading}
               className="flex-1"
             >
-              Annuler
+              Cancel
             </Button>
             <Button
               type="submit"
@@ -134,10 +133,10 @@ const BuyTokenModal: React.FC<BuyTokenModalProps> = ({
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Achat en cours...
+                  Purchase in progress...
                 </>
               ) : (
-                'Confirmer l\'achat'
+                'Confirm purchase'
               )}
             </Button>
           </div>

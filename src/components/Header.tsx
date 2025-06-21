@@ -117,14 +117,15 @@ const Header: React.FC<HeaderProps> = ({ isWalletConnected, onWalletConnection }
           {/* Wallet Connection */}
           <div className="flex items-center space-x-4">
             {isWalletConnected ? (
-              <div className="flex items-center space-x-2">
-                <Badge variant="outline" className="border-green-500 text-green-400 font-bold">
+              <div className="flex items-center space-x-3 ">
+                <Badge variant="outline" className="border-green-500 text-green-400 font-bold bg-green-500/10 px-3 py-1 rounded-full animate-pulse ml-4">
+                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
                   Connected
                 </Badge>
                 <Button
                   onClick={handleDisconnectWallet}
                   variant="outline"
-                  className="font-bold border-gray-600 text-gray-300 hover:bg-gray-800"
+                  className="font-bold border-avalanche-red/50 text-white hover:bg-avalanche-red hover:text-white hover:border-avalanche-red bg-gray-800/50 backdrop-blur-sm transition-all duration-300 rounded-xl px-4 py-2"
                 >
                   <Wallet className="mr-2 h-4 w-4" />
                   {getWalletAddress()}
@@ -133,7 +134,7 @@ const Header: React.FC<HeaderProps> = ({ isWalletConnected, onWalletConnection }
             ) : (
               <Button
                 onClick={handleConnectWallet}
-                className="bg-gradient-to-r from-avalanche-red to-red-600 hover:from-red-600 hover:to-avalanche-red text-white font-bold"
+                className="bg-gradient-to-r from-avalanche-red to-red-600 hover:from-red-600 hover:to-avalanche-red text-white font-bold transition-all duration-300 transform hover:scale-105 rounded-xl px-6 py-2 shadow-lg hover:shadow-avalanche-red/25"
               >
                 <Wallet className="mr-2 h-4 w-4" />
                 Connect Wallet

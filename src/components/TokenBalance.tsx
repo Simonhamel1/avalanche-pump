@@ -29,8 +29,8 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
   const copyToClipboard = (text: string, type: string) => {
     navigator.clipboard.writeText(text);
     toast({
-      title: "Copié !",
-      description: `${type} copié dans le presse-papiers`,
+      title: "Copied!",
+      description: `${type} copied to clipboard`,
     });
   };
 
@@ -57,13 +57,13 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
     const num = parseFloat(balance);
     if (num === 0) return '0';
     
-    // Divise par 1×10^18 pour réduire la magnitude
+    // Divide by 1×10^18 to reduce magnitude
     const adjustedNum = num / Math.pow(10, 18);
     
     if (adjustedNum < 0.0001) return '< 0.0001';
     if (adjustedNum < 1) return adjustedNum.toFixed(6);
     
-    // Affichage avec espaces comme séparateurs (format français) sans virgules
+    // Display with spaces as separators (French format) without commas
     return Math.round(adjustedNum).toLocaleString('fr-FR').replace(/,/g, ' ').replace(/\u00A0/g, ' ');
   };
 
@@ -71,10 +71,10 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
     const num = parseFloat(supply);
     if (num === 0) return '0';
     
-    // Divise par 1×10^18 pour réduire la magnitude
+    // Divide by 1×10^18 to reduce magnitude
     const adjustedNum = num / Math.pow(10, 18);
     
-    // Affichage avec espaces comme séparateurs (format français) sans virgules
+    // Display with spaces as separators (French format) without commas
     return Math.round(adjustedNum).toLocaleString('fr-FR').replace(/,/g, ' ').replace(/\u00A0/g, ' ');
   };
 
@@ -88,17 +88,17 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
         <CardHeader>
           <CardTitle className="flex items-center">
             <Wallet className="w-5 h-5 mr-2" />
-            Mes Tokens
+            My Tokens
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">
             <Coins className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Aucun token trouvé
+              No tokens found
             </h3>
             <p className="text-gray-500">
-              Vos tokens apparaîtront ici une fois que vous en posséderez
+              Your tokens will appear here once you own some
             </p>
           </div>
         </CardContent>
@@ -108,12 +108,12 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Résumé du portefeuille */}
+      {/* Portfolio Summary */}
       <Card className="bg-gradient-to-r from-avalanche-red to-avalanche-light">
         <CardHeader>
           <CardTitle className="flex items-center text-white">
             <Wallet className="w-5 h-5 mr-2" />
-            Mon Portefeuille
+            My Wallet
           </CardTitle>
         </CardHeader>
         <CardContent className="text-white">
@@ -123,7 +123,7 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
                 {tokens.length}
               </div>
               <div className="text-sm opacity-90">
-                Token(s) total
+                Total Token(s)
               </div>
             </div>
             
@@ -132,7 +132,7 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
                 {tokensWithBalance.length}
               </div>
               <div className="text-sm opacity-90">
-                Avec balance
+                With Balance
               </div>
             </div>
             
@@ -141,7 +141,7 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
                 ${totalPortfolioValue.toFixed(2)}
               </div>
               <div className="text-sm opacity-90">
-                Valeur estimée
+                Estimated Value
               </div>
             </div>
           </div>
@@ -149,7 +149,7 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
           {userAddress && (
             <div className="mt-4 p-3 bg-white/10 rounded-lg">
               <div className="flex items-center justify-between">
-                <span className="text-sm opacity-90">Adresse:</span>
+                <span className="text-sm opacity-90">Address:</span>
                 <div className="flex items-center space-x-2">
                   <span className="font-mono text-sm">
                     {formatAddress(userAddress)}
@@ -158,7 +158,7 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
                     variant="ghost"
                     size="sm"
                     className="h-6 w-6 p-0 text-white hover:bg-white/20"
-                    onClick={() => copyToClipboard(userAddress, "Adresse")}
+                    onClick={() => copyToClipboard(userAddress, "Address")}
                   >
                     <Copy className="h-3 w-3" />
                   </Button>
@@ -177,13 +177,13 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
         </CardContent>
       </Card>
 
-      {/* Liste des tokens */}
+      {/* Token List */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center">
               <Coins className="w-5 h-5 mr-2" />
-              Mes Tokens
+              My Tokens
             </div>
             <Badge variant="secondary">{tokens.length} token(s)</Badge>
           </CardTitle>
@@ -204,7 +204,7 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
-                      {/* Image du token */}
+                      {/* Token Image */}
                       <div className="w-10 h-10 bg-gradient-to-br from-avalanche-red to-avalanche-light rounded-full flex items-center justify-center text-white font-bold">
                         {token.symbol.charAt(0)}
                       </div>
@@ -219,14 +219,14 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
                           </Badge>
                           {isCreator && (
                             <Badge variant="default" className="text-xs bg-purple-100 text-purple-800">
-                              Créateur
+                              Creator
                             </Badge>
                           )}
                         </div>
                         
                         <div className="text-xs text-gray-500 space-y-1">
                           <div className="flex items-center space-x-2">
-                            <span>Adresse:</span>
+                            <span>Address:</span>
                             <span className="font-mono">
                               {formatAddress(token.address)}
                             </span>
@@ -234,7 +234,7 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
                               variant="ghost"
                               size="sm"
                               className="h-4 w-4 p-0"
-                              onClick={() => copyToClipboard(token.address, "Adresse du token")}
+                              onClick={() => copyToClipboard(token.address, "Token address")}
                             >
                               <Copy className="h-3 w-3" />
                             </Button>
@@ -249,7 +249,7 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
                           </div>
                           
                           <div>
-                            Supply total: {formatSupply(token.totalSupply)} {token.symbol}
+                            Total Supply: {formatSupply(token.totalSupply)} {token.symbol}
                           </div>
                         </div>
                       </div>
@@ -270,7 +270,7 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({
                       
                       {!hasBalance && (
                         <div className="text-xs text-gray-400">
-                          Aucune balance
+                          No balance
                         </div>
                       )}
                     </div>

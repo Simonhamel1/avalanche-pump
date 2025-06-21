@@ -53,7 +53,7 @@ const WalletInstallPrompt: React.FC<WalletInstallPromptProps> = ({ isVisible, on
               >
                 <Button variant="outline" className="w-full">
                   <Download className="mr-2 h-4 w-4" />
-                  Ou MetaMask
+                  Or MetaMask
                   <ExternalLink className="ml-2 h-4 w-4" />
                 </Button>
               </a>
@@ -61,8 +61,8 @@ const WalletInstallPrompt: React.FC<WalletInstallPromptProps> = ({ isVisible, on
 
             <div className="bg-blue-50 p-3 rounded-lg">
               <p className="text-xs text-blue-800">
-                <strong>Recommandé :</strong> Core Wallet est spécialement conçu pour Avalanche 
-                et offre la meilleure expérience utilisateur.
+                <strong>Recommended:</strong> Core Wallet is specially designed for Avalanche 
+                and offers the best user experience.
               </p>
             </div>
 
@@ -72,7 +72,7 @@ const WalletInstallPrompt: React.FC<WalletInstallPromptProps> = ({ isVisible, on
               onClick={onClose}
               className="text-gray-500"
             >
-              Fermer
+              Close
             </Button>
           </div>
         </CardContent>

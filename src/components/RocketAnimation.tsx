@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Rocket, Star, Sparkles } from 'lucide-react';
@@ -24,18 +23,18 @@ const RocketAnimation: React.FC<RocketAnimationProps> = ({
       setAnimationPhase('countdown');
       setCountdown(3);
       
-      // Compte à rebours
+      // Countdown
       const countdownInterval = setInterval(() => {
         setCountdown(prev => {
           if (prev <= 1) {
             clearInterval(countdownInterval);
             setAnimationPhase('launch');
             
-            // Phase de lancement
+            // Launch phase
             setTimeout(() => {
               setAnimationPhase('success');
               
-              // Fermer après la célébration
+              // Close after celebration
               setTimeout(() => {
                 onComplete();
               }, 3000);
@@ -57,7 +56,7 @@ const RocketAnimation: React.FC<RocketAnimationProps> = ({
     <Dialog open={isVisible} onOpenChange={() => {}}>
       <DialogContent className="max-w-lg bg-gradient-to-br from-gray-900 to-black border-avalanche-red border-2 text-white overflow-hidden">
         <div className="relative h-96 flex flex-col items-center justify-center">
-          {/* Étoiles d'arrière-plan */}
+          {/* Background stars */}
           <div className="absolute inset-0 overflow-hidden">
             {[...Array(20)].map((_, i) => (
               <Star

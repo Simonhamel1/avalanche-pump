@@ -28,20 +28,20 @@ const DiceGame: React.FC<DiceGameProps> = ({ token, onBetPlaced }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Créer une instance de service pour ce token spécifique
+    // Create a service instance for this specific token
     const service = createDiceGameServiceForToken(token.address);
     setDiceGameService(service);
     
-    // Initialiser le jeu avec le nouveau service
+    // Initialize the game with the new service
     initializeGameWithService(service);
 
     return () => {
-      // Nettoyage lors du changement de token ou démontage du composant
+      // Cleanup when token changes or component unmounts
       service.cleanup();
     };
   }, [token.address]);
 
-  // Mettre à jour le solde lors du changement de token
+  // Update balance when token changes
   useEffect(() => {
     setPlayerBalance(token.userBalance || '0');
   }, [token.userBalance]);
@@ -61,10 +61,10 @@ const DiceGame: React.FC<DiceGameProps> = ({ token, onBetPlaced }) => {
       await loadGameDataWithService(service);
       setupEventListenersWithService(service);
     } catch (error) {
-      console.error('Erreur lors de l\'initialisation du jeu:', error);
+      console.error('Error initializing game:', error);
       toast({
-        title: "Erreur d'initialisation",
-        description: "Impossible de charger le jeu de dés. Vérifiez votre connexion wallet.",
+        title: "Initialization Error",
+        description: "Could not load the dice game. Check your wallet connection.",
         variant: "destructive",
       });
     }
@@ -76,7 +76,7 @@ const DiceGame: React.FC<DiceGameProps> = ({ token, onBetPlaced }) => {
         service.getGameStats(),
         service.getPlayerBetsWithDetails()
       ]);
-        setGameStats(stats);
+      setGameStats(stats);
       // Use token balance from props instead of service
       setPlayerBalance(token.userBalance || '0');
       setBetHistory(history);
@@ -127,12 +127,12 @@ const DiceGame: React.FC<DiceGameProps> = ({ token, onBetPlaced }) => {
     setCurrentRequestId(null);
     
     toast({
-      title: won ? "🎉 Victoire !" : "😔 Défaite",
-      description: `Dé: ${diceValue} - ${won ? `Gain: ${result.payout} tokens` : 'Meilleure chance la prochaine fois !'}`,
+      title: won ? "🎉 Victory!" : "😔 Defeat",
+      description: `Dice: ${diceValue} - ${won ? `Win: ${result.payout} tokens` : 'Better luck next time!'}`,
       variant: won ? "default" : "destructive"
     });
     
-    // Recharger les stats du jeu et appeler onBetPlaced pour rafraîchir le solde du token
+    // Reload game stats and call onBetPlaced to refresh token balance
     loadGameDataWithService(result.service);
     onBetPlaced?.();
   };
@@ -146,8 +146,8 @@ const DiceGame: React.FC<DiceGameProps> = ({ token, onBetPlaced }) => {
     
     if (betValue < minBet) {
       toast({
-        title: "Pari invalide",
-        description: `Le pari minimum est de ${gameStats.minimumBet} tokens`,
+        title: "Invalid Bet",
+        description: `Minimum bet is ${gameStats.minimumBet} tokens`,
         variant: "destructive"
       });
       return;
@@ -155,8 +155,8 @@ const DiceGame: React.FC<DiceGameProps> = ({ token, onBetPlaced }) => {
     
     if (betValue > userBalance) {
       toast({
-        title: "Solde insuffisant",
-        description: `Votre solde est de ${playerBalance} tokens`,
+        title: "Insufficient Balance",
+        description: `Your balance is ${playerBalance} tokens`,
         variant: "destructive"
       });
       return;
@@ -173,25 +173,26 @@ const DiceGame: React.FC<DiceGameProps> = ({ token, onBetPlaced }) => {
       
       toast({
         title: "Bet Placed!",
-        description: "En attente du résultat VRF...",
+        description: "Waiting for VRF result...",
       });
       
-      // Attendre le résultat avec timeout
+      // Wait for result with timeout
       try {
         const result = await diceGameService.waitForBetResult(requestId, 120000);
-        console.log('Résultat reçu:', result);
+        console.log('Result received:', result);
       } catch (timeoutError) {
-        console.warn('Timeout VRF, mais l\'événement peut encore arriver');
+        console.warn('VRF timeout, but the event may still arrive');
         toast({
-          title: "Délai d'attente",
-          description: "Le résultat prend plus de temps que prévu. Le résultat sera affiché dès réception.",
+          title: "Waiting Time Exceeded",
+          description: "The result is taking longer than expected. It will be displayed as soon as received.",
           variant: "default"
         });
       }
     } catch (error: any) {
-      console.error('Erreur lors du placement du pari:', error);
+      console.error('Error placing bet:', error);
       setIsRolling(false);
-      setAnimatingDice(false);      setCurrentRequestId(null);
+      setAnimatingDice(false);      
+      setCurrentRequestId(null);
       
       // Check if the error is due to an unconfigured contract
       if (error.message && error.message.includes('VOTRE_ADRESSE_TOKEN_ICI')) {
@@ -231,47 +232,48 @@ const DiceGame: React.FC<DiceGameProps> = ({ token, onBetPlaced }) => {
   };
 
   const getPayoutInfo = () => [
-    { range: '0-24%', multiplier: '0x (Perte)', probability: '25%', color: 'text-red-400' },
-    { range: '25-49%', multiplier: '1x (Remboursement)', probability: '25%', color: 'text-yellow-400' },
+    { range: '0-24%', multiplier: '0x (Loss)', probability: '25%', color: 'text-red-400' },
+    { range: '25-49%', multiplier: '1x (Refund)', probability: '25%', color: 'text-yellow-400' },
     { range: '50-79%', multiplier: '1.5x', probability: '30%', color: 'text-blue-400' },
     { range: '80-94%', multiplier: '3x', probability: '15%', color: 'text-green-400' },
     { range: '95-98%', multiplier: '10x', probability: '4%', color: 'text-purple-400' },
     { range: '99%', multiplier: '50x (JACKPOT!)', probability: '1%', color: 'text-orange-400' }
   ];
+  
   return (
     <div className="space-y-6 p-4">
-      {/* Zone de jeu principale */}
+      {/* Main game area */}
       <Card className="bg-gradient-to-br from-gray-800/90 to-gray-900/90 border-avalanche-red/30 overflow-hidden">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-avalanche-red to-red-400">
-            🎲 JEU DE DÉ CHAINLINK VRF
+            🎲 CHAINLINK VRF DICE GAME
           </CardTitle>
-          <p className="text-gray-400">Pariez avec vos tokens et tentez votre chance !</p>
+          <p className="text-gray-400">Bet with your tokens and try your luck!</p>
           {gameStats && (
             <div className="text-sm text-gray-500">
-              Mise minimum: {gameStats.minimumBet} tokens | House Edge: {gameStats.houseEdge}%
+              Minimum Bet: {gameStats.minimumBet} tokens | House Edge: {gameStats.houseEdge}%
             </div>
           )}
         </CardHeader>
         
         <CardContent className="space-y-6">
-          {/* Informations du joueur */}
+          {/* Player information */}
           <div className="bg-gray-700/30 rounded-lg p-4">
             <div className="grid grid-cols-2 gap-4 text-center">
               <div>
-                <p className="text-sm text-gray-400">Votre solde</p>
+                <p className="text-sm text-gray-400">Your Balance</p>
                 <p className="text-xl font-bold text-white">{playerBalance} tokens</p>
               </div>
               {gameStats && (
                 <div>
-                  <p className="text-sm text-gray-400">Taux de victoire</p>
+                  <p className="text-sm text-gray-400">Win Rate</p>
                   <p className="text-xl font-bold text-green-400">{gameStats.winRate}%</p>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Dé central */}
+          {/* Central dice */}
           <div className="flex flex-col items-center space-y-4">
             <div className="relative">
               <div className="bg-gray-700/50 rounded-3xl p-8 border-2 border-dashed border-avalanche-red/30">
@@ -287,20 +289,20 @@ const DiceGame: React.FC<DiceGameProps> = ({ token, onBetPlaced }) => {
             {currentRequestId && isRolling && (
               <div className="text-center">
                 <p className="text-sm text-gray-400">Request ID: {currentRequestId}</p>
-                <p className="text-yellow-400 font-medium">En attente du VRF...</p>
+                <p className="text-yellow-400 font-medium">Waiting for VRF...</p>
               </div>
             )}
             
             {diceResult && (
               <div className="text-center">
-                <p className="text-xl font-bold text-white">Résultat: {diceResult}</p>
+                <p className="text-xl font-bold text-white">Result: {diceResult}</p>
                 {lastWin ? (
                   <p className="text-green-400 font-bold">
-                    🎉 Gain: {lastWin.amount} tokens ({lastWin.multiplier})
+                    🎉 Win: {lastWin.amount} tokens ({lastWin.multiplier})
                   </p>
                 ) : (
                   <p className="text-red-400 font-bold">
-                    😔 Pas de chance cette fois
+                    😔 No luck this time
                   </p>
                 )}
               </div>
@@ -309,17 +311,17 @@ const DiceGame: React.FC<DiceGameProps> = ({ token, onBetPlaced }) => {
 
           <Separator className="bg-gray-700" />
 
-          {/* Zone de pari */}
+          {/* Bet area */}
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Montant du pari (tokens)
+                Bet Amount (tokens)
               </label>
               <Input
                 type="number"
                 value={betAmount}
                 onChange={(e) => setBetAmount(e.target.value)}
-                placeholder={gameStats ? `Min: ${gameStats.minimumBet}` : "Entrez votre mise"}
+                placeholder={gameStats ? `Min: ${gameStats.minimumBet}` : "Enter your bet"}
                 className="bg-gray-700/50 border-gray-600 text-white text-center text-lg font-bold"
                 disabled={isRolling}
                 step="0.01"
@@ -327,7 +329,7 @@ const DiceGame: React.FC<DiceGameProps> = ({ token, onBetPlaced }) => {
                 max={playerBalance}
               />
               <p className="text-xs text-gray-400 mt-1">
-                Solde disponible: {playerBalance} tokens
+                Available balance: {playerBalance} tokens
               </p>
             </div>
             
@@ -339,12 +341,12 @@ const DiceGame: React.FC<DiceGameProps> = ({ token, onBetPlaced }) => {
               {isRolling ? (
                 <>
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  ATTENTE DU VRF...
+                  WAITING FOR VRF...
                 </>
               ) : (
                 <>
                   <Flame className="mr-2 h-5 w-5" />
-                  PLACER LE PARI
+                  PLACE BET
                 </>
               )}
             </Button>
@@ -352,12 +354,12 @@ const DiceGame: React.FC<DiceGameProps> = ({ token, onBetPlaced }) => {
         </CardContent>
       </Card>
 
-      {/* Tableau des gains */}
+      {/* Payout table */}
       <Card className="bg-gray-800/50 border-gray-700/50">
         <CardHeader>
           <CardTitle className="text-lg font-bold text-green-400 flex items-center">
             <Trophy className="mr-2 h-5 w-5" />
-            Table des Gains (Chainlink VRF)
+            Payout Table (Chainlink VRF)
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -380,18 +382,18 @@ const DiceGame: React.FC<DiceGameProps> = ({ token, onBetPlaced }) => {
             ))}
           </div>
           <div className="mt-4 text-xs text-gray-500 text-center">
-            Le résultat est déterminé par Chainlink VRF pour une randomness vérifiable
+            The result is determined by Chainlink VRF for verifiable randomness
           </div>
         </CardContent>
       </Card>
 
-      {/* Historique récent */}
+      {/* Recent history */}
       {betHistory.length > 0 && (
         <Card className="bg-gray-800/50 border-gray-700/50">
           <CardHeader>
             <CardTitle className="text-lg font-bold text-blue-400 flex items-center">
               <Coins className="mr-2 h-5 w-5" />
-              Historique des Paris ({betHistory.length})
+              Bet History ({betHistory.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -400,7 +402,7 @@ const DiceGame: React.FC<DiceGameProps> = ({ token, onBetPlaced }) => {
                 <div key={index} className="flex justify-between items-center p-3 bg-gray-700/30 rounded text-sm">
                   <div className="flex-1">
                     <div className="text-gray-300">
-                      Pari: {bet.betAmount} tokens
+                      Bet: {bet.betAmount} tokens
                     </div>
                     <div className="text-xs text-gray-500">
                       Request ID: {bet.requestId.slice(0, 8)}...
@@ -417,7 +419,7 @@ const DiceGame: React.FC<DiceGameProps> = ({ token, onBetPlaced }) => {
                         </div>
                       </div>
                     ) : (
-                      <Badge variant="outline" className="text-xs">En attente VRF</Badge>
+                      <Badge variant="outline" className="text-xs">Waiting for VRF</Badge>
                     )}
                   </div>
                 </div>
@@ -427,15 +429,15 @@ const DiceGame: React.FC<DiceGameProps> = ({ token, onBetPlaced }) => {
               <div className="mt-4 pt-4 border-t border-gray-700">
                 <div className="grid grid-cols-3 gap-4 text-center text-sm">
                   <div>
-                    <p className="text-gray-400">Total gagné</p>
+                    <p className="text-gray-400">Total won</p>
                     <p className="text-green-400 font-bold">{gameStats.totalWinnings}</p>
                   </div>
                   <div>
-                    <p className="text-gray-400">Total perdu</p>
+                    <p className="text-gray-400">Total lost</p>
                     <p className="text-red-400 font-bold">{gameStats.totalLosses}</p>
                   </div>
                   <div>
-                    <p className="text-gray-400">Paris totaux</p>
+                    <p className="text-gray-400">Total bets</p>
                     <p className="text-white font-bold">{gameStats.totalBets}</p>
                   </div>
                 </div>

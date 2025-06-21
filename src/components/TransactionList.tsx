@@ -48,28 +48,28 @@ const TransactionList: React.FC<TransactionListProps> = ({
   const getStatusBadge = (status: Transaction['status']) => {
     switch (status) {
       case 'success':
-        return <Badge variant="default" className="bg-green-100 text-green-800">Succès</Badge>;
+        return <Badge variant="default" className="bg-green-100 text-green-800">Success</Badge>;
       case 'failed':
-        return <Badge variant="destructive">Échec</Badge>;
+        return <Badge variant="destructive">Failed</Badge>;
       case 'pending':
-        return <Badge variant="secondary">En attente</Badge>;
+        return <Badge variant="secondary">Pending</Badge>;
       default:
-        return <Badge variant="outline">Inconnu</Badge>;
+        return <Badge variant="outline">Unknown</Badge>;
     }
   };
 
   const getTypeLabel = (type: Transaction['type']) => {
     switch (type) {
       case 'send':
-        return 'Envoi';
+        return 'Send';
       case 'receive':
-        return 'Réception';
+        return 'Receive';
       case 'token_transfer':
-        return 'Transfert Token';
+        return 'Token Transfer';
       case 'token_creation':
-        return 'Création Token';
+        return 'Token Creation';
       case 'contract':
-        return 'Contrat';
+        return 'Contract';
       default:
         return 'Transaction';
     }
@@ -88,7 +88,7 @@ const TransactionList: React.FC<TransactionListProps> = ({
         <CardHeader>
           <CardTitle className="flex items-center">
             <Clock className="w-5 h-5 mr-2" />
-            Chargement des transactions...
+            Loading transactions...
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -117,17 +117,17 @@ const TransactionList: React.FC<TransactionListProps> = ({
         <CardHeader>
           <CardTitle className="flex items-center">
             <FileText className="w-5 h-5 mr-2" />
-            Historique des transactions
+            Transaction History
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">
             <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Aucune transaction trouvée
+              No transactions found
             </h3>
             <p className="text-gray-500">
-              Vos transactions récentes apparaîtront ici
+              Your recent transactions will appear here
             </p>
           </div>
         </CardContent>
@@ -141,7 +141,7 @@ const TransactionList: React.FC<TransactionListProps> = ({
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center">
             <FileText className="w-5 h-5 mr-2" />
-            Historique des transactions
+            Transaction History
           </div>
           <Badge variant="secondary">{transactions.length} transaction(s)</Badge>
         </CardTitle>
@@ -189,7 +189,7 @@ const TransactionList: React.FC<TransactionListProps> = ({
                       <div className="flex items-center space-x-2">
                         <User className="w-3 h-3" />
                         <span>
-                          {isSent ? 'Vers' : 'De'}: {transactionService.formatAddress(isSent ? tx.to : tx.from)}
+                          {isSent ? 'To' : 'From'}: {transactionService.formatAddress(isSent ? tx.to : tx.from)}
                         </span>
                       </div>
                       
@@ -217,7 +217,7 @@ const TransactionList: React.FC<TransactionListProps> = ({
                   </div>
                   
                   <div className="text-xs text-gray-500">
-                    Bloc #{tx.blockNumber}
+                    Block #{tx.blockNumber}
                   </div>
                 </div>
               </div>
